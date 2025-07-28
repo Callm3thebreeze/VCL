@@ -1,6 +1,11 @@
-const AWS = require('aws-sdk');
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const fs = require('fs').promises;
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const database = require('../config/database');
 const config = require('../config/config');
@@ -8,11 +13,13 @@ const AudioFile = require('../models/AudioFile');
 
 class FileService {
   constructor() {
-    // Configure AWS S3
-    this.s3 = new AWS.S3({
-      accessKeyId: config.aws.accessKeyId,
-      secretAccessKey: config.aws.secretAccessKey,
+    // Configure AWS S3 Client (v3)
+    this.s3Client = new S3Client({
       region: config.aws.region,
+      credentials: {
+        accessKeyId: config.aws.accessKeyId,
+        secretAccessKey: config.aws.secretAccessKey,
+      },
     });
   }
 
@@ -25,14 +32,18 @@ class FileService {
       Key: s3Key,
       Body: fileBuffer,
       ContentType: mimeType,
-      ACL: 'public-read', // Make files publicly accessible
+      // Note: ACL is deprecated in AWS SDK v3, use bucket policies instead
     };
 
-    const result = await this.s3.upload(uploadParams).promise();
+    const command = new PutObjectCommand(uploadParams);
+    await this.s3Client.send(command);
+
+    // Construct the public URL (adjust based on your bucket configuration)
+    const s3Url = `https://${config.aws.s3Bucket}.s3.${config.aws.region}.amazonaws.com/${s3Key}`;
 
     return {
       s3Key: s3Key,
-      s3Url: result.Location,
+      s3Url: s3Url,
     };
   }
 
@@ -42,7 +53,8 @@ class FileService {
       Key: s3Key,
     };
 
-    await this.s3.deleteObject(deleteParams).promise();
+    const command = new DeleteObjectCommand(deleteParams);
+    await this.s3Client.send(command);
   }
 
   async createAudioFile(userId, fileData, s3Data) {
@@ -187,13 +199,12 @@ class FileService {
   }
 
   async generatePresignedUrl(s3Key, expiresIn = 3600) {
-    const params = {
+    const command = new GetObjectCommand({
       Bucket: config.aws.s3Bucket,
       Key: s3Key,
-      Expires: expiresIn,
-    };
+    });
 
-    return this.s3.getSignedUrl('getObject', params);
+    return await getSignedUrl(this.s3Client, command, { expiresIn });
   }
 }
 
