@@ -60,7 +60,8 @@ class TranscriptionController {
    */
   async getTranscriptions(req, res, next) {
     try {
-      const { page, limit } = req.query;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
 
       const transcriptions = await transcriptionService.getUserTranscriptions(
@@ -79,8 +80,8 @@ class TranscriptionController {
           transcription.toJSON()
         ),
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: page,
+          limit: limit,
           total: stats.totalTranscriptions,
         },
       });

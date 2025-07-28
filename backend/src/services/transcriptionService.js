@@ -40,25 +40,20 @@ class TranscriptionService {
   }
 
   async getUserTranscriptions(userId, limit = 50, offset = 0) {
+    // Ensure parameters are valid integers
+    const safeLimit = Math.max(1, Math.min(parseInt(limit) || 50, 100)); // Between 1 and 100
+    const safeOffset = Math.max(0, parseInt(offset) || 0); // At least 0
+
     const query = `
-      SELECT t.*, af.original_filename, af.s3_url
-      FROM transcriptions t
-      JOIN audio_files af ON t.audio_file_id = af.id
-      WHERE t.user_id = ?
-      ORDER BY t.created_at DESC
-      LIMIT ? OFFSET ?
+      SELECT * FROM transcriptions 
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT ${safeLimit} OFFSET ${safeOffset}
     `;
 
-    const rows = await database.query(query, [userId, limit, offset]);
+    const rows = await database.query(query, [userId]);
 
-    return rows.map((row) => {
-      const transcription = Transcription.fromDatabase(row);
-      transcription.audioFile = {
-        originalFilename: row.original_filename,
-        s3Url: row.s3_url,
-      };
-      return transcription;
-    });
+    return rows.map((row) => Transcription.fromDatabase(row));
   }
 
   async updateTranscriptionStatus(

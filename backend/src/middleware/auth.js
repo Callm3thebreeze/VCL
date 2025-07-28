@@ -27,7 +27,7 @@ const authenticateToken = async (req, res, next) => {
 
     // Get user data
     const user = await userService.getUserById(decoded.userId);
-    if (!user || !user.is_active) {
+    if (!user) {
       return res.status(401).json({
         error: 'Access denied',
         message: 'User not found or inactive',

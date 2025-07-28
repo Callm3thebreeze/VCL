@@ -9,8 +9,18 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:api": "node tests/test-runner.js",
+    "test:api:basic": "node tests/test-runner.js endpoints",
+    "test:api:complete": "node tests/test-runner.js complete",
+    "test:db": "node tests/test-runner.js database",
+    "test:app": "node tests/test-runner.js app",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "db:start": "docker-compose up -d mysql",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && docker-compose up -d mysql",
+    "db:logs": "docker-compose logs -f mysql",
+    "setup": "npm install && npm run db:start"
   },
   "dependencies": {
     "express": "^4.18.2",

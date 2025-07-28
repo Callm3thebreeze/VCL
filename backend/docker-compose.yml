@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: vocali_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_DATABASE: vocali_db
+      MYSQL_USER: vocali_user
+      MYSQL_PASSWORD: vocali_pass
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - vocali_network
+    command: --mysql-native-password=ON
+
+  # Opcional: phpMyAdmin para gestión visual
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: vocali_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: password123
+    ports:
+      - '8080:80'
+    depends_on:
+      - mysql
+    networks:
+      - vocali_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  vocali_network:
+    driver: bridge

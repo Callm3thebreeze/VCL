@@ -133,13 +133,19 @@ class UserService {
   }
 
   async updateUser(userId, updateData) {
-    const allowedFields = ['first_name', 'last_name'];
+    const fieldMapping = {
+      firstName: 'first_name',
+      lastName: 'last_name',
+      first_name: 'first_name',
+      last_name: 'last_name',
+    };
+
     const fields = [];
     const values = [];
 
     for (const [key, value] of Object.entries(updateData)) {
-      if (allowedFields.includes(key)) {
-        fields.push(`${key} = ?`);
+      if (fieldMapping[key]) {
+        fields.push(`${fieldMapping[key]} = ?`);
         values.push(value);
       }
     }
