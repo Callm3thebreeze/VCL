@@ -1,0 +1,387 @@
+# ================================================
+# VOCALI PROJECT - GITIGNORE
+# Frontend: Nuxt.js 4 + Vue 3 + TypeScript
+# Backend: Node.js + Express + MySQL
+# ================================================
+
+# ====================================
+# NODE.JS & NPM
+# ====================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ====================================
+# NUXT.JS FRONTEND
+# ====================================
+# Build directories
+.nuxt/
+.output/
+.nitro/
+dist/
+
+# Cache directories
+.cache/
+.vite/
+.eslintcache
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+
+# Nuxt generate
+.nuxt/
+dist/
+
+# Vite temporary files
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# ====================================
+# BACKEND NODE.JS
+# ====================================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache/
+
+# Next.js build output
+.next/
+
+# Nuxt.js build / generate output
+.nuxt/
+dist/
+
+# Storybook build outputs
+.out/
+.storybook-out/
+
+# Temporary folders
+tmp/
+temp/
+
+# ====================================
+# UPLOADS & MEDIA
+# ====================================
+# Audio files uploaded by users
+backend/uploads/
+frontend/uploads/
+uploads/
+*.mp3
+*.wav
+*.m4a
+*.ogg
+*.flac
+*.aac
+*.wma
+
+# Images (except for static assets)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+!frontend/public/**
+!backend/public/**
+!frontend/assets/**
+!backend/assets/**
+
+# ====================================
+# DATABASE
+# ====================================
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Database dumps
+*.sql
+*.dump
+
+# ====================================
+# ENVIRONMENT & CONFIG
+# ====================================
+# Environment variables
+.env*
+!.env.example
+.envrc
+
+# Config files with sensitive data
+config/production.json
+config/staging.json
+config/local.json
+
+# ====================================
+# TESTING
+# ====================================
+# Test results
+test-results/
+coverage/
+.nyc_output/
+junit.xml
+
+# Jest
+coverage/
+*.lcov
+
+# ====================================
+# AWS & CLOUD
+# ====================================
+# AWS credentials
+.aws/
+aws-exports.js
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ====================================
+# DEVELOPMENT TOOLS
+# ====================================
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# WebStorm
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ====================================
+# OS GENERATED
+# ====================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# DOCUMENTATION
+# ====================================
+# Generated docs
+docs/build/
+docs/.vuepress/dist/
+
+# ====================================
+# SECURITY & CERTIFICATES
+# ====================================
+# Private keys
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# JWT secrets
+jwt-secret.txt
+
+# ====================================
+# LOGS & MONITORING
+# ====================================
+# Application logs
+logs/
+*.log
+error.log
+access.log
+combined.log
+
+# PM2 logs
+.pm2/
+
+# ====================================
+# BACKUP FILES
+# ====================================
+*.bak
+*.backup
+*.old
+*.tmp
+*.temp
+
+# ====================================
+# VOCALI SPECIFIC
+# ====================================
+# Audio transcription cache
+transcription-cache/
+
+# User data exports
+exports/
+
+# Generated certificates
+certificates/
+
+# Development seeds
+seeds/dev-data/
+
+# Test audio files (keep examples)
+test-audio/
+!test-audio/example.mp3
+
+# Local configuration overrides
+config.local.js
+config.local.json
+
+# ====================================
+# BUILD ARTIFACTS
+# ====================================
+build/
+dist/
+out/
+target/
+
+# ====================================
+# PACKAGE MANAGERS
+# ====================================
+# npm
+package-lock.json
+
+# Yarn
+yarn.lock
+.yarn/
+
+# pnpm
+pnpm-lock.yaml
+.pnpm/
+
+# ====================================
+# MISCELLANEOUS
+# ====================================
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Temporary files
+*.tmp
+*.temp
+~*

@@ -1,0 +1,307 @@
+/**
+ * Archivo principal de estilos para Vocali
+ * Importa TailwindCSS y estilos personalizados
+ */
+
+// Importar TailwindCSS
+@use '_tailwind';
+
+// Importar variables y componentes personalizados
+@use '_variables';
+
+/**
+ * Estilos globales adicionales que no están en TailwindCSS
+ */
+
+// Fuente Inter optimizada - usando CSS @import en lugar de Sass @import
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+// Reset adicional para mejor consistencia
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family-sans;
+  line-height: $leading-normal;
+}
+
+// Mejorar la renderización de medios
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  vertical-align: middle;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+// Estados de focus mejorados para accesibilidad
+[tabindex='-1']:focus:not(:focus-visible) {
+  outline: 0 !important;
+}
+
+// Estilos para elementos de formulario
+input,
+button,
+select,
+optgroup,
+textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+// Remover spinner de inputs numéricos
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+// Estilos para elementos de audio/video personalizados
+.audio-player {
+  width: 100%;
+  background: $white;
+  border-radius: $rounded-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    padding: $spacing-4;
+    gap: $spacing-3;
+  }
+
+  &__progress {
+    flex: 1;
+    height: 4px;
+    background: $gray-200;
+    border-radius: $rounded-full;
+    overflow: hidden;
+    cursor: pointer;
+
+    &-fill {
+      height: 100%;
+      background: $primary-600;
+      transition: width 0.1s ease;
+    }
+  }
+
+  &__time {
+    font-size: $text-sm;
+    color: $gray-600;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  &__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: $rounded-full;
+    background: $primary-600;
+    color: $white;
+    cursor: pointer;
+    transition: all $duration-200;
+
+    &:hover {
+      background: $primary-700;
+      transform: scale(1.05);
+    }
+
+    &:focus {
+      @include focus-ring;
+    }
+
+    &:disabled {
+      background: $gray-300;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+}
+
+// Estilos para notificaciones/toasts
+.notification {
+  position: fixed;
+  top: $spacing-4;
+  right: $spacing-4;
+  max-width: 400px;
+  padding: $spacing-4;
+  border-radius: $rounded-lg;
+  box-shadow: $shadow-lg;
+  z-index: $z-tooltip;
+  animation: slideInRight 0.3s ease-out;
+
+  &--success {
+    background: $success-50;
+    border-left: 4px solid $success-500;
+    color: $success-800;
+  }
+
+  &--error {
+    background: $error-50;
+    border-left: 4px solid $error-500;
+    color: $error-800;
+  }
+
+  &--warning {
+    background: $warning-50;
+    border-left: 4px solid $warning-500;
+    color: $warning-800;
+  }
+
+  &--info {
+    background: $info-50;
+    border-left: 4px solid $info-500;
+    color: $info-800;
+  }
+}
+
+// Loader/spinner personalizado
+.vocali-loader {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid $gray-200;
+  border-radius: 50%;
+  border-top-color: $primary-600;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Estilos para drag & drop
+.drop-zone {
+  border: 2px dashed $gray-300;
+  border-radius: $rounded-lg;
+  padding: $spacing-8;
+  text-align: center;
+  transition: all $duration-200;
+
+  &--active {
+    border-color: $primary-500;
+    background: $primary-50;
+  }
+
+  &--error {
+    border-color: $error-500;
+    background: $error-50;
+  }
+}
+
+// Estilos para modo oscuro
+@media (prefers-color-scheme: dark) {
+  .audio-player {
+    background: $gray-800;
+    color: $white;
+
+    &__progress {
+      background: $gray-700;
+    }
+
+    &__time {
+      color: $gray-300;
+    }
+  }
+
+  .drop-zone {
+    border-color: $gray-600;
+
+    &--active {
+      border-color: $primary-400;
+      background: rgba($primary-500, 0.1);
+    }
+  }
+}
+
+// Utilidades para estados de carga
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    $gray-200 25%,
+    $gray-100 50%,
+    $gray-200 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Responsive utilities específicas de Vocali
+@media (max-width: $breakpoint-sm) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: $breakpoint-md) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+// Print styles
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    color: $black !important;
+    background: $white !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid $gray-300 !important;
+  }
+}

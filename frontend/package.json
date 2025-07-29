@@ -1,0 +1,56 @@
+{
+  "name": "vocali-frontend",
+  "version": "1.0.0",
+  "description": "Frontend de la plataforma de transcripción de audio Vocali",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint --ext .ts,.js,.vue .",
+    "lint:fix": "eslint --ext .ts,.js,.vue . --fix",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "e2e": "cypress open",
+    "e2e:run": "cypress run",
+    "type-check": "nuxt typecheck"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@nuxtjs/tailwindcss": "^6.8.4",
+    "@pinia/nuxt": "^0.11.2",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "@vitest/ui": "^1.6.0",
+    "@vue/test-utils": "^2.4.1",
+    "cypress": "^13.3.0",
+    "eslint": "^8.50.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "happy-dom": "^15.11.6",
+    "nuxt": "^4.0.2",
+    "sass": "^1.69.0",
+    "typescript": "^5.2.2",
+    "vitest": "^1.6.0",
+    "vue-tsc": "^2.1.10"
+  },
+  "dependencies": {
+    "@element-plus/nuxt": "^1.0.7",
+    "@nuxt/icon": "^1.15.0",
+    "@vueuse/core": "^13.6.0",
+    "@vueuse/nuxt": "^13.6.0",
+    "axios": "^1.5.0",
+    "dayjs": "^1.11.9",
+    "element-plus": "^2.4.1",
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.4.1",
+    "vue-final-modal": "^4.4.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
