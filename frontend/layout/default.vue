@@ -1,30 +1,21 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col">
-    <!-- Header/Navigation -->
-    <AppHeader />
-
-    <!-- Main Content -->
     <main id="main-content" class="flex-1">
       <slot />
     </main>
-
-    <!-- Footer -->
-    <AppFooter />
-
-    <!-- Toast Notifications -->
-    <ToastContainer />
-
-    <!-- Modal Container -->
-    <ModalContainer />
-
-    <!-- Loading Overlay -->
-    <LoadingOverlay v-if="isLoading" />
   </div>
 </template>
 
 <script setup lang="ts">
 // Layout por defecto de Vocali
-const { isAuthenticated, initAuth, isLoading } = useAuth();
+const isLoading = ref(false);
+
+// Para evitar errores mientras no existe useAuth, creamos un stub temporal
+const isAuthenticated = ref(false);
+const initAuth = async () => {
+  // Implementar inicialización de auth
+  console.log('Initializing auth...');
+};
 
 // Inicializar autenticación al cargar la app
 onMounted(async () => {
