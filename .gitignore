@@ -365,6 +365,11 @@ pnpm-lock.yaml
 # ====================================
 # MISCELLANEOUS
 # ====================================
+# Development instructions and notes
+.github/instructions/
+*.instructions.*
+*instructions*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

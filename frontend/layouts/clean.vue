@@ -4,6 +4,4 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// Layout limpio sin header ni footer para el dashboard
-</script>
+<script setup lang="ts"></script>
