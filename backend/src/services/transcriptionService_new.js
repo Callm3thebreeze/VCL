@@ -37,8 +37,10 @@ class TranscriptionService {
    */
   async processTranscription(transcriptionId) {
     try {
-      console.log(`🚀 Iniciando procesamiento de transcripción ${transcriptionId}`);
-      
+      console.log(
+        `🚀 Iniciando procesamiento de transcripción ${transcriptionId}`
+      );
+
       // Marcar como en procesamiento
       await this.updateTranscriptionStatus(transcriptionId, 'processing', {
         processing_started_at: new Date().toISOString(),
@@ -56,14 +58,17 @@ class TranscriptionService {
       }
 
       // Verificar que el archivo existe
-      if (!await fs.pathExists(audioFile.filePath)) {
+      if (!(await fs.pathExists(audioFile.filePath))) {
         throw new Error(`Audio file not found at path: ${audioFile.filePath}`);
       }
 
       // Procesar con Whisper
-      const result = await this.whisperService.transcribeAudio(audioFile.filePath, {
-        language: transcription.language,
-      });
+      const result = await this.whisperService.transcribeAudio(
+        audioFile.filePath,
+        {
+          language: transcription.language,
+        }
+      );
 
       // Actualizar transcripción con resultado
       await this.updateTranscriptionStatus(transcriptionId, 'completed', {
@@ -72,12 +77,16 @@ class TranscriptionService {
         processing_completed_at: new Date().toISOString(),
       });
 
-      console.log(`✅ Transcripción ${transcriptionId} completada exitosamente`);
+      console.log(
+        `✅ Transcripción ${transcriptionId} completada exitosamente`
+      );
       return result;
-
     } catch (error) {
-      console.error(`❌ Error procesando transcripción ${transcriptionId}:`, error);
-      
+      console.error(
+        `❌ Error procesando transcripción ${transcriptionId}:`,
+        error
+      );
+
       // Marcar como fallida
       await this.updateTranscriptionStatus(transcriptionId, 'failed', {
         error_message: error.message,
@@ -91,7 +100,11 @@ class TranscriptionService {
   /**
    * Update transcription status and data
    */
-  async updateTranscriptionStatus(transcriptionId, status, additionalData = {}) {
+  async updateTranscriptionStatus(
+    transcriptionId,
+    status,
+    additionalData = {}
+  ) {
     const updateData = {
       status,
       updated_at: new Date().toISOString(),
@@ -150,14 +163,16 @@ class TranscriptionService {
 
     let query = database.client
       .from('transcriptions')
-      .select(`
+      .select(
+        `
         *,
         audio_files (
           original_filename,
           file_size,
           duration_seconds
         )
-      `)
+      `
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -172,9 +187,11 @@ class TranscriptionService {
       throw new Error(`Error fetching transcriptions: ${error.message}`);
     }
 
-    return data.map(item => ({
+    return data.map((item) => ({
       ...Transcription.fromDatabase(item).toJSON(),
-      audioFile: item.audio_files ? AudioFile.fromDatabase(item.audio_files).toJSON() : null,
+      audioFile: item.audio_files
+        ? AudioFile.fromDatabase(item.audio_files).toJSON()
+        : null,
     }));
   }
 
@@ -199,10 +216,12 @@ class TranscriptionService {
   async getTranscriptionWithAudioFile(transcriptionId, userId) {
     const { data, error } = await database.client
       .from('transcriptions')
-      .select(`
+      .select(
+        `
         *,
         audio_files (*)
-      `)
+      `
+      )
       .eq('id', transcriptionId)
       .eq('user_id', userId)
       .single();
@@ -213,7 +232,9 @@ class TranscriptionService {
 
     return {
       ...Transcription.fromDatabase(data).toJSON(),
-      audioFile: data.audio_files ? AudioFile.fromDatabase(data.audio_files).toJSON() : null,
+      audioFile: data.audio_files
+        ? AudioFile.fromDatabase(data.audio_files).toJSON()
+        : null,
     };
   }
 }

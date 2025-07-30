@@ -158,49 +158,100 @@
 
     <!-- Dialog de upload -->
     <UploadTranscriptionsDialog
-      v-if="showUploadDialog"
+      :isOpen="showUploadDialog"
       @close="showUploadDialog = false"
-      @upload="handleAdvancedUpload"
+      @uploaded="handleAdvancedUpload"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 // Composables
 const { logout } = useAuth();
 
-// Estado de la aplicación
+// Funciones de API locales
+const getTranscriptions = async () => {
+  const config = useRuntimeConfig();
+  const token = localStorage.getItem('vocali_token');
+
+  const response = await fetch(`${config.public.apiBase}/api/transcriptions`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch transcriptions');
+  }
+
+  return await response.json();
+};
+
+const deleteTranscriptionApi = async (id: number) => {
+  const config = useRuntimeConfig();
+  const token = localStorage.getItem('vocali_token');
+
+  const response = await fetch(
+    `${config.public.apiBase}/api/transcriptions/${id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to delete transcription');
+  }
+
+  return await response.json();
+}; // Estado de la aplicación
 const showUploadDialog = ref(false);
 const selectedTranscription = ref<any>(null);
 
-// Historial de transcripciones
-const transcriptionHistory = ref([
-  {
-    id: 1,
-    fileName: 'reunión-proyecto.mp3',
-    date: '29 Jul 2025',
-    result:
-      'Esta es una transcripción de ejemplo de una reunión de proyecto donde se discutieron los objetivos del primer trimestre y las estrategias de implementación. Se establecieron las metas para los próximos meses y se asignaron responsabilidades a cada miembro del equipo.',
-  },
-  {
-    id: 2,
-    fileName: 'entrevista-cliente.wav',
-    date: '28 Jul 2025',
-    result:
-      'Transcripción de entrevista con cliente donde se recopiló feedback sobre el producto actual y sugerencias de mejora para futuras versiones. El cliente expresó satisfacción general con el producto pero sugirió algunas mejoras en la interfaz de usuario.',
-  },
-  {
-    id: 3,
-    fileName: 'conferencia-marketing.m4a',
-    date: '27 Jul 2025',
-    result:
-      'Resumen de la conferencia de marketing donde se presentaron las nuevas estrategias digitales para el segundo semestre. Se discutieron las campañas en redes sociales y los objetivos de alcance para los próximos trimestres.',
-  },
-]);
+// Historial de transcripciones (ahora se carga desde la API)
+const transcriptionHistory = ref<any[]>([]);
+const isLoadingTranscriptions = ref(false);
+
+// Cargar transcripciones al montar el componente
+onMounted(async () => {
+  await loadTranscriptions();
+});
 
 // Funciones
+const loadTranscriptions = async () => {
+  try {
+    isLoadingTranscriptions.value = true;
+    const response = await getTranscriptions();
+
+    if (response.success && response.data) {
+      // Convertir formato de API al formato esperado por el componente
+      transcriptionHistory.value = response.data.map((item: any) => ({
+        id: item.id,
+        fileName: item.audioFile?.originalFilename || 'archivo.mp3',
+        date: new Date(item.createdAt).toLocaleDateString('es-ES'),
+        result:
+          item.transcriptionText ||
+          (item.status === 'completed'
+            ? 'Transcripción completada'
+            : item.status === 'processing'
+            ? 'Transcripción en proceso...'
+            : item.status === 'failed'
+            ? 'Error en transcripción'
+            : 'Pendiente de procesar'),
+        status: item.status,
+      }));
+    }
+  } catch (error) {
+    console.error('Error cargando transcripciones:', error);
+  } finally {
+    isLoadingTranscriptions.value = false;
+  }
+};
+
 const handleLogout = async () => {
   console.log('🚪 Iniciando logout...');
   await logout();
@@ -208,25 +259,23 @@ const handleLogout = async () => {
 
 const handleAdvancedUpload = async (transcription: any) => {
   try {
-    console.log('🚀 Upload avanzado completado:', transcription);
+    console.log('🚀 Upload completado:', transcription);
 
     // Cerrar dialog
     showUploadDialog.value = false;
 
-    // Agregar la transcripción al historial con el formato correcto
-    const newTranscription = {
-      id: Date.now(),
-      fileName: transcription.fileName || 'nueva-transcripcion.mp3',
-      date: new Date().toLocaleDateString('es-ES'),
-      result: transcription.result || 'Transcripción completada exitosamente.',
-    };
+    // Recargar transcripciones para mostrar la nueva
+    await loadTranscriptions();
 
-    transcriptionHistory.value.unshift(newTranscription);
+    // Mostrar la nueva transcripción si está disponible
+    const newTranscription = transcriptionHistory.value.find(
+      (t) => t.id === transcription.id
+    );
+    if (newTranscription) {
+      selectedTranscription.value = newTranscription;
+    }
 
-    // Mostrar la nueva transcripción
-    selectedTranscription.value = newTranscription;
-
-    console.log('✅ Transcripción agregada al historial');
+    console.log('✅ Dashboard actualizado');
   } catch (error) {
     console.error('❌ Error al procesar transcripción:', error);
   }
@@ -236,14 +285,25 @@ const loadTranscription = (item: any) => {
   selectedTranscription.value = item;
 };
 
-const deleteTranscription = (id: number) => {
+const deleteTranscription = async (id: number) => {
   if (confirm('¿Estás seguro de que quieres eliminar esta transcripción?')) {
-    transcriptionHistory.value = transcriptionHistory.value.filter(
-      (t) => t.id !== id
-    );
-    // Si la transcripción eliminada era la seleccionada, limpiar selección
-    if (selectedTranscription.value?.id === id) {
-      selectedTranscription.value = null;
+    try {
+      await deleteTranscriptionApi(id);
+
+      // Actualizar lista local
+      transcriptionHistory.value = transcriptionHistory.value.filter(
+        (t) => t.id !== id
+      );
+
+      // Si la transcripción eliminada era la seleccionada, limpiar selección
+      if (selectedTranscription.value?.id === id) {
+        selectedTranscription.value = null;
+      }
+
+      console.log('✅ Transcripción eliminada exitosamente');
+    } catch (error) {
+      console.error('❌ Error eliminando transcripción:', error);
+      alert('Error al eliminar la transcripción. Inténtalo de nuevo.');
     }
   }
 };

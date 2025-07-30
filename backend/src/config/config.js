@@ -27,6 +27,25 @@ module.exports = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
 
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+    whisperModel: process.env.WHISPER_MODEL || 'whisper-1',
+    whisperLanguage: process.env.WHISPER_LANGUAGE || 'es',
+  },
+
+  upload: {
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 20971520, // 20MB
+    allowedTypes: process.env.ALLOWED_AUDIO_TYPES?.split(',') || [
+      'audio/mpeg',
+      'audio/wav',
+      'audio/mp3',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg',
+    ],
+    uploadDir: './uploads',
+  },
+
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,

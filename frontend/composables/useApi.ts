@@ -256,3 +256,73 @@ export const useApi = () => {
     apiRequest,
   };
 };
+
+/**
+ * Composable específico para transcripciones
+ */
+export const useTranscriptionApi = () => {
+  const { post, get, delete: del } = useApi();
+
+  /**
+   * Subir archivo de audio y iniciar transcripción
+   */
+  const uploadAndTranscribe = async (audioFile: File, language = 'es') => {
+    const formData = new FormData();
+    formData.append('audio', audioFile);
+    formData.append('language', language);
+
+    const config = useRuntimeConfig();
+    const token = localStorage.getItem('vocali_token');
+
+    try {
+      const response = await fetch(
+        `${config.public.apiBase}/api/transcriptions/upload`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Obtener transcripciones del usuario
+   */
+  const getTranscriptions = async (params = {}) => {
+    return get('/api/transcriptions', params);
+  };
+
+  /**
+   * Obtener transcripción específica
+   */
+  const getTranscription = async (id: number) => {
+    return get(`/api/transcriptions/${id}`);
+  };
+
+  /**
+   * Eliminar transcripción
+   */
+  const deleteTranscription = async (id: number) => {
+    return del(`/api/transcriptions/${id}`);
+  };
+
+  return {
+    uploadAndTranscribe,
+    getTranscriptions,
+    getTranscription,
+    deleteTranscription,
+  };
+};

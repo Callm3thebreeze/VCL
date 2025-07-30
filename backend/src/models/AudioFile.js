@@ -6,8 +6,8 @@ class AudioFile {
     this.storedFilename = data.stored_filename;
     this.fileSize = data.file_size;
     this.mimeType = data.mime_type;
-    this.s3Key = data.s3_key;
-    this.s3Url = data.s3_url;
+    this.filePath = data.file_path;
+    this.durationSeconds = data.duration_seconds;
     this.uploadStatus = data.upload_status;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
@@ -22,8 +22,8 @@ class AudioFile {
       storedFilename: this.storedFilename,
       fileSize: this.fileSize,
       mimeType: this.mimeType,
-      s3Key: this.s3Key,
-      s3Url: this.s3Url,
+      filePath: this.filePath,
+      durationSeconds: this.durationSeconds,
       uploadStatus: this.uploadStatus,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

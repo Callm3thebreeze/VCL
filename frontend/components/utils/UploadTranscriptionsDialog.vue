@@ -253,6 +253,33 @@ const loading = ref(false);
 const uploadProgress = ref(0);
 const error = ref('');
 
+// Función simple para testing
+const uploadAndTranscribe = async (audioFile: File, language = 'es') => {
+  const formData = new FormData();
+  formData.append('audio', audioFile);
+  formData.append('language', language);
+
+  const token = localStorage.getItem('vocali_token');
+
+  const response = await fetch(
+    'http://localhost:3000/api/transcriptions/upload',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Upload failed');
+  }
+
+  return await response.json();
+};
+
 // Métodos
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -324,32 +351,46 @@ const handleUpload = async () => {
   error.value = '';
 
   try {
-    // Simular subida de archivo con progreso
-    const uploadInterval = setInterval(() => {
-      uploadProgress.value += 10;
-      if (uploadProgress.value >= 100) {
-        clearInterval(uploadInterval);
+    console.log('🚀 Iniciando subida de archivo:', selectedFile.value.name);
 
-        // Simular transcripción creada
-        const newTranscription = {
-          id: Date.now().toString(),
-          fileName: selectedFile.value!.name,
-          title: transcriptionTitle.value || selectedFile.value!.name,
-          fileSize: selectedFile.value!.size,
-          status: 'processing',
-          language: selectedLanguage.value,
-          includeTimestamps: includeTimestamps.value,
-          duration: '00:00', // Se actualizará cuando se procese
-          createdAt: new Date().toISOString(),
-        };
+    // Simular progreso inicial
+    uploadProgress.value = 20;
 
-        emit('uploaded', newTranscription);
-        resetForm();
-      }
-    }, 200);
-  } catch (err) {
-    error.value = 'Error al subir el archivo. Inténtalo de nuevo.';
+    // Llamar a la API real
+    const result = await uploadAndTranscribe(
+      selectedFile.value,
+      selectedLanguage.value === 'auto' ? 'es' : selectedLanguage.value
+    );
+
+    console.log('✅ Resultado de API:', result);
+    uploadProgress.value = 100;
+
+    // Emitir el resultado con el formato esperado por el dashboard
+    const transcriptionData = {
+      id: result.data.transcriptionId,
+      fileName: result.data.fileName,
+      status: result.data.status,
+      result: 'Transcripción en proceso...', // Se actualizará cuando complete
+      date: new Date().toLocaleDateString('es-ES'),
+    };
+
+    emit('uploaded', transcriptionData);
+
+    // Mostrar notificación de éxito
+    console.log('✅ Archivo subido exitosamente!');
+
+    resetForm();
+  } catch (err: any) {
+    console.error('❌ Error en upload:', err);
+    error.value =
+      err.message || 'Error al subir el archivo. Inténtalo de nuevo.';
     uploadProgress.value = 0;
+
+    // Mostrar notificación de error
+    console.error(
+      '❌ Error al subir archivo:',
+      err.message || 'Inténtalo de nuevo.'
+    );
   } finally {
     loading.value = false;
   }

@@ -28,14 +28,15 @@ class FileService {
       // Obtener información del archivo
       const fileStats = await fs.stat(finalPath);
 
-      console.log(`📁 Archivo guardado: ${finalPath} (${fileStats.size} bytes)`);
+      console.log(
+        `📁 Archivo guardado: ${finalPath} (${fileStats.size} bytes)`
+      );
 
       return {
         storedFilename: uniqueFilename,
         filePath: finalPath,
         fileSize: fileStats.size,
       };
-
     } catch (error) {
       console.error('Error saving file to local storage:', error);
       throw new Error(`Failed to save file: ${error.message}`);
@@ -120,7 +121,7 @@ class FileService {
       throw new Error(`Error fetching audio files: ${error.message}`);
     }
 
-    return data.map(item => AudioFile.fromDatabase(item));
+    return data.map((item) => AudioFile.fromDatabase(item));
   }
 
   /**
@@ -161,7 +162,7 @@ class FileService {
    * Get file stream for download
    */
   async getFileStream(filePath) {
-    if (!await this.fileExists(filePath)) {
+    if (!(await this.fileExists(filePath))) {
       throw new Error('File not found');
     }
     return fs.createReadStream(filePath);
@@ -191,7 +192,7 @@ class FileService {
   async cleanupTempFiles(maxAgeHours = 24) {
     try {
       const tempDir = path.join(this.uploadDir, 'temp');
-      if (!await fs.pathExists(tempDir)) return;
+      if (!(await fs.pathExists(tempDir))) return;
 
       const files = await fs.readdir(tempDir);
       const maxAge = maxAgeHours * 60 * 60 * 1000; // hours to milliseconds
@@ -200,7 +201,7 @@ class FileService {
       for (const file of files) {
         const filePath = path.join(tempDir, file);
         const stats = await fs.stat(filePath);
-        
+
         if (now - stats.mtime.getTime() > maxAge) {
           await fs.remove(filePath);
           console.log(`🧹 Cleaned up temp file: ${file}`);
