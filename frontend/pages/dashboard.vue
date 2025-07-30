@@ -8,7 +8,7 @@
         <div class="flex justify-between h-16">
           <div class="flex items-center">
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-              Vocali
+              iVocal
             </h1>
           </div>
           <div class="flex items-center">
