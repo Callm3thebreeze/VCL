@@ -4,12 +4,19 @@ module.exports = {
     environment: process.env.NODE_ENV || 'development',
   },
 
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    anonKey: process.env.SUPABASE_ANON_KEY,
+    serviceKey: process.env.SUPABASE_SERVICE_KEY,
+  },
+
   database: {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    name: process.env.DB_NAME || 'vocali_db',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    // Supabase PostgreSQL connection (fallback para conexiones directas si es necesario)
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    name: process.env.DB_NAME || 'postgres',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     connectionLimit: 10,
     acquireTimeout: 60000,
     timeout: 60000,

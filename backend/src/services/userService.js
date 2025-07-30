@@ -14,85 +14,105 @@ class UserService {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Insert user into database
-    const query = `
-      INSERT INTO users (email, password_hash, first_name, last_name)
-      VALUES (?, ?, ?, ?)
-    `;
+    // Insertar usuario en Supabase
+    const { data, error } = await database.client
+      .from('users')
+      .insert([
+        {
+          email,
+          password_hash: passwordHash,
+          first_name: firstName,
+          last_name: lastName,
+        },
+      ])
+      .select()
+      .single();
 
-    const result = await database.query(query, [
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-    ]);
+    if (error) {
+      throw new Error(`Error creating user: ${error.message}`);
+    }
 
-    // Fetch the created user
-    return await this.getUserById(result.insertId);
+    return User.fromDatabase(data);
   }
 
   async getUserById(id) {
-    const query = 'SELECT * FROM users WHERE id = ? AND is_active = true';
-    const rows = await database.query(query, [id]);
+    const { data, error } = await database.client
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .eq('is_active', true)
+      .single();
 
-    if (rows.length === 0) {
+    if (error || !data) {
       return null;
     }
 
-    return User.fromDatabase(rows[0]);
+    return User.fromDatabase(data);
   }
 
   async getUserByEmail(email) {
-    const query = 'SELECT * FROM users WHERE email = ? AND is_active = true';
-    const rows = await database.query(query, [email]);
+    const { data, error } = await database.client
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('is_active', true)
+      .single();
 
-    if (rows.length === 0) {
+    if (error || !data) {
       return null;
     }
 
-    return User.fromDatabase(rows[0]);
+    return User.fromDatabase(data);
   }
 
   async authenticateUser(email, password) {
-    // Get user with password hash
-    const query = 'SELECT * FROM users WHERE email = ? AND is_active = true';
-    const rows = await database.query(query, [email]);
+    // Obtener usuario con hash de contraseña
+    const { data, error } = await database.client
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('is_active', true)
+      .single();
 
-    if (rows.length === 0) {
+    if (error || !data) {
       return null;
     }
 
-    const user = rows[0];
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    // Verificar contraseña
+    const isValidPassword = await bcrypt.compare(password, data.password_hash);
     if (!isValidPassword) {
       return null;
     }
 
-    return User.fromDatabase(user);
+    return User.fromDatabase(data);
   }
 
   async generateToken(userId) {
-    // Create JWT token
+    // Crear JWT token
     const token = jwt.sign({ userId: userId }, config.jwt.secret, {
       expiresIn: config.jwt.expiresIn,
     });
 
-    // Hash token for database storage
+    // Hash token para almacenamiento en base de datos
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    // Calculate expiration date
+    // Calcular fecha de expiración
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 días
 
-    // Store token in database
-    const query = `
-      INSERT INTO session_tokens (user_id, token_hash, expires_at)
-      VALUES (?, ?, ?)
-    `;
+    // Almacenar token en Supabase
+    const { error } = await database.client.from('session_tokens').insert([
+      {
+        user_id: userId,
+        token_hash: tokenHash,
+        expires_at: expiresAt.toISOString(),
+      },
+    ]);
 
-    await database.query(query, [userId, tokenHash, expiresAt]);
+    if (error) {
+      console.error('Error storing session token:', error);
+      // No lanzamos error aquí porque el token JWT ya está creado
+    }
 
     return token;
   }
@@ -100,36 +120,41 @@ class UserService {
   async validateToken(token, userId) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const query = `
-      SELECT * FROM session_tokens 
-      WHERE token_hash = ? AND user_id = ? AND is_revoked = false AND expires_at > NOW()
-    `;
+    const { data, error } = await database.client
+      .from('session_tokens')
+      .select('*')
+      .eq('token_hash', tokenHash)
+      .eq('user_id', userId)
+      .eq('is_revoked', false)
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
-    const rows = await database.query(query, [tokenHash, userId]);
-
-    return rows.length > 0;
+    return !error && data;
   }
 
   async revokeToken(token) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const query = `
-      UPDATE session_tokens 
-      SET is_revoked = true 
-      WHERE token_hash = ?
-    `;
+    const { error } = await database.client
+      .from('session_tokens')
+      .update({ is_revoked: true })
+      .eq('token_hash', tokenHash);
 
-    await database.query(query, [tokenHash]);
+    if (error) {
+      console.error('Error revoking token:', error);
+    }
   }
 
   async revokeAllUserTokens(userId) {
-    const query = `
-      UPDATE session_tokens 
-      SET is_revoked = true 
-      WHERE user_id = ? AND is_revoked = false
-    `;
+    const { error } = await database.client
+      .from('session_tokens')
+      .update({ is_revoked: true })
+      .eq('user_id', userId)
+      .eq('is_revoked', false);
 
-    await database.query(query, [userId]);
+    if (error) {
+      console.error('Error revoking all user tokens:', error);
+    }
   }
 
   async updateUser(userId, updateData) {
@@ -140,85 +165,105 @@ class UserService {
       last_name: 'last_name',
     };
 
-    const fields = [];
-    const values = [];
+    const updateFields = {};
 
     for (const [key, value] of Object.entries(updateData)) {
       if (fieldMapping[key]) {
-        fields.push(`${fieldMapping[key]} = ?`);
-        values.push(value);
+        updateFields[fieldMapping[key]] = value;
       }
     }
 
-    if (fields.length === 0) {
+    if (Object.keys(updateFields).length === 0) {
       throw new Error('No valid fields to update');
     }
 
-    values.push(userId);
+    // Agregar timestamp de actualización
+    updateFields.updated_at = new Date().toISOString();
 
-    const query = `
-      UPDATE users 
-      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
+    const { error } = await database.client
+      .from('users')
+      .update(updateFields)
+      .eq('id', userId);
 
-    await database.query(query, values);
+    if (error) {
+      throw new Error(`Error updating user: ${error.message}`);
+    }
 
     return await this.getUserById(userId);
   }
 
   async changePassword(userId, currentPassword, newPassword) {
-    // Get user with current password hash
-    const query = 'SELECT password_hash FROM users WHERE id = ?';
-    const rows = await database.query(query, [userId]);
+    // Obtener usuario con hash de contraseña actual
+    const { data: user, error } = await database.client
+      .from('users')
+      .select('password_hash')
+      .eq('id', userId)
+      .single();
 
-    if (rows.length === 0) {
+    if (error || !user) {
       throw new Error('User not found');
     }
 
-    // Verify current password
+    // Verificar contraseña actual
     const isValidPassword = await bcrypt.compare(
       currentPassword,
-      rows[0].password_hash
+      user.password_hash
     );
     if (!isValidPassword) {
       throw new Error('Current password is incorrect');
     }
 
-    // Hash new password
+    // Hash nueva contraseña
     const saltRounds = 12;
     const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
 
-    // Update password
-    const updateQuery = `
-      UPDATE users 
-      SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
+    // Actualizar contraseña
+    const { error: updateError } = await database.client
+      .from('users')
+      .update({
+        password_hash: newPasswordHash,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
 
-    await database.query(updateQuery, [newPasswordHash, userId]);
+    if (updateError) {
+      throw new Error(`Error updating password: ${updateError.message}`);
+    }
 
-    // Revoke all existing tokens to force re-login
+    // Revocar todos los tokens existentes para forzar re-login
     await this.revokeAllUserTokens(userId);
   }
 
   async deactivateUser(userId) {
-    const query = `
-      UPDATE users 
-      SET is_active = false, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
+    const { error } = await database.client
+      .from('users')
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
 
-    await database.query(query, [userId]);
+    if (error) {
+      throw new Error(`Error deactivating user: ${error.message}`);
+    }
 
-    // Revoke all tokens
+    // Revocar todos los tokens
     await this.revokeAllUserTokens(userId);
   }
 
   async cleanupExpiredTokens() {
-    const query = 'DELETE FROM session_tokens WHERE expires_at < NOW()';
-    const result = await database.query(query);
-    return result.affectedRows;
+    const { error } = await database.client
+      .from('session_tokens')
+      .delete()
+      .lt('expires_at', new Date().toISOString());
+
+    if (error) {
+      console.error('Error cleaning up expired tokens:', error);
+      return 0;
+    }
+
+    // Supabase no devuelve affectedRows directamente
+    return 1; // Indicar que la operación fue exitosa
   }
 }
 

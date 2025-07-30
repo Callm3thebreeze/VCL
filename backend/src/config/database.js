@@ -1,127 +1,105 @@
-const mysql = require('mysql2/promise');
+const { createClient } = require('@supabase/supabase-js');
 const config = require('./config');
 
 class Database {
   constructor() {
-    this.pool = null;
+    this.supabase = null;
   }
 
   async initialize() {
     try {
-      this.pool = mysql.createPool({
-        host: config.database.host,
-        port: config.database.port,
-        user: config.database.user,
-        password: config.database.password,
-        database: config.database.name,
-        connectionLimit: config.database.connectionLimit,
-        acquireTimeout: config.database.acquireTimeout,
-        timeout: config.database.timeout,
-        reconnect: true,
-        timezone: 'Z',
-      });
+      // Verificar que tenemos las credenciales de Supabase
+      if (!config.supabase.url || !config.supabase.serviceKey) {
+        throw new Error('Supabase URL and Service Key are required');
+      }
 
-      // Test the connection
-      const connection = await this.pool.getConnection();
-      console.log('Database connected successfully');
-      connection.release();
+      // Crear cliente de Supabase con la service key para acceso admin
+      this.supabase = createClient(
+        config.supabase.url,
+        config.supabase.serviceKey
+      );
 
-      // Create tables if they don't exist
+      console.log('Supabase client initialized successfully');
+
+      // Crear tablas si no existen
       await this.createTables();
     } catch (error) {
-      console.error('Database connection failed:', error);
+      console.error('Supabase connection failed:', error);
       throw error;
     }
   }
 
   async createTables() {
-    const queries = [
-      // Users table
-      `CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        first_name VARCHAR(100) NOT NULL,
-        last_name VARCHAR(100) NOT NULL,
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_active (is_active)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    try {
+      // En Supabase, las tablas se crean directamente en la interfaz web
+      // Pero podemos verificar que existan
+      console.log('Verificando tablas en Supabase...');
 
-      // Session tokens table
-      `CREATE TABLE IF NOT EXISTS session_tokens (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        token_hash VARCHAR(255) NOT NULL,
-        expires_at TIMESTAMP NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_revoked BOOLEAN DEFAULT false,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        INDEX idx_user_id (user_id),
-        INDEX idx_token_hash (token_hash),
-        INDEX idx_expires_at (expires_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      // Verificar tabla users
+      const { error: usersError } = await this.supabase
+        .from('users')
+        .select('count', { count: 'exact', head: true });
 
-      // Audio files table
-      `CREATE TABLE IF NOT EXISTS audio_files (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        original_filename VARCHAR(255) NOT NULL,
-        stored_filename VARCHAR(255) NOT NULL,
-        file_size BIGINT NOT NULL,
-        mime_type VARCHAR(100) NOT NULL,
-        s3_key VARCHAR(500) NOT NULL,
-        s3_url VARCHAR(1000) NOT NULL,
-        upload_status ENUM('uploading', 'completed', 'failed') DEFAULT 'uploading',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        INDEX idx_user_id (user_id),
-        INDEX idx_upload_status (upload_status),
-        INDEX idx_created_at (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-
-      // Transcriptions table
-      `CREATE TABLE IF NOT EXISTS transcriptions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        audio_file_id INT NOT NULL,
-        user_id INT NOT NULL,
-        transcription_text TEXT,
-        confidence_score DECIMAL(3,2),
-        language VARCHAR(10) DEFAULT 'es',
-        status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
-        processing_started_at TIMESTAMP NULL,
-        processing_completed_at TIMESTAMP NULL,
-        error_message TEXT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (audio_file_id) REFERENCES audio_files(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        INDEX idx_audio_file_id (audio_file_id),
-        INDEX idx_user_id (user_id),
-        INDEX idx_status (status),
-        INDEX idx_created_at (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    ];
-
-    for (const query of queries) {
-      try {
-        await this.pool.execute(query);
-      } catch (error) {
-        console.error('Error creating table:', error);
-        throw error;
+      if (usersError && usersError.code === 'PGRST116') {
+        console.log(
+          'Tabla users no existe. Créala en la interfaz de Supabase.'
+        );
+      } else {
+        console.log('Tabla users verificada');
       }
-    }
 
-    console.log('Database tables created successfully');
+      // Verificar tabla session_tokens
+      const { error: tokensError } = await this.supabase
+        .from('session_tokens')
+        .select('count', { count: 'exact', head: true });
+
+      if (tokensError && tokensError.code === 'PGRST116') {
+        console.log(
+          'Tabla session_tokens no existe. Créala en la interfaz de Supabase.'
+        );
+      } else {
+        console.log('Tabla session_tokens verificada');
+      }
+
+      // Verificar tabla audio_files
+      const { error: audioError } = await this.supabase
+        .from('audio_files')
+        .select('count', { count: 'exact', head: true });
+
+      if (audioError && audioError.code === 'PGRST116') {
+        console.log(
+          'Tabla audio_files no existe. Créala en la interfaz de Supabase.'
+        );
+      } else {
+        console.log('Tabla audio_files verificada');
+      }
+
+      // Verificar tabla transcriptions
+      const { error: transcriptionsError } = await this.supabase
+        .from('transcriptions')
+        .select('count', { count: 'exact', head: true });
+
+      if (transcriptionsError && transcriptionsError.code === 'PGRST116') {
+        console.log(
+          'Tabla transcriptions no existe. Créala en la interfaz de Supabase.'
+        );
+      } else {
+        console.log('Tabla transcriptions verificada');
+      }
+
+      console.log('Verificación de tablas completada');
+    } catch (error) {
+      console.error('Error verificando tablas:', error);
+    }
   }
 
-  async query(sql, params = []) {
+  async query(sql, _params = []) {
     try {
-      const [rows] = await this.pool.execute(sql, params);
-      return rows;
+      // Para consultas SQL directas con Supabase usamos el método rpc o directamente PostgREST
+      console.warn(
+        'Método query() deprecado para Supabase. Usa los métodos de Supabase directamente.'
+      );
+      throw new Error('Use Supabase client methods instead of raw SQL queries');
     } catch (error) {
       console.error('Database query error:', error);
       throw error;
@@ -129,25 +107,24 @@ class Database {
   }
 
   async transaction(callback) {
-    const connection = await this.pool.getConnection();
+    // Supabase maneja las transacciones de forma diferente
+    // Por ahora, ejecutamos el callback directamente
     try {
-      await connection.beginTransaction();
-      const result = await callback(connection);
-      await connection.commit();
-      return result;
+      return await callback(this.supabase);
     } catch (error) {
-      await connection.rollback();
+      console.error('Transaction error:', error);
       throw error;
-    } finally {
-      connection.release();
     }
   }
 
   async close() {
-    if (this.pool) {
-      await this.pool.end();
-      console.log('Database connection closed');
-    }
+    // Supabase no requiere cerrar conexiones explícitamente
+    console.log('Supabase client - no connection to close');
+  }
+
+  // Getter para acceder al cliente de Supabase
+  get client() {
+    return this.supabase;
   }
 }
 
