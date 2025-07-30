@@ -53,6 +53,12 @@ export default defineNuxtConfig({
     },
   },
 
+  // Configuración del servidor de desarrollo
+  devServer: {
+    port: 3001,
+    host: 'localhost',
+  },
+
   // Configuración del head de la aplicación
   app: {
     head: {

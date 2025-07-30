@@ -63,38 +63,53 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
+      const config = useRuntimeConfig();
+      console.log(
+        'Attempting login to:',
+        `${config.public.apiBase}/api/auth/login`
+      );
+
       const response = await $fetch<ApiResponse<AuthResponse>>(
         '/api/auth/login',
         {
           method: 'POST',
           body: credentials,
+          baseURL: config.public.apiBase,
         }
       );
 
-      if (response.success && response.data) {
-        const { user: userData, token, refreshToken } = response.data;
+      console.log('Login response:', response);
 
-        // Guardar tokens
+      if (response && response.success && response.data) {
+        console.log('Response validation passed, processing login...');
+        const { user: userData, token } = response.data;
+
+        // Guardar token
         localStorage.setItem(tokenKey, token);
-        localStorage.setItem(refreshTokenKey, refreshToken);
+        if (response.data.refreshToken) {
+          localStorage.setItem(refreshTokenKey, response.data.refreshToken);
+        }
 
         // Establecer usuario
         user.value = userData;
+        console.log('User set successfully:', userData);
 
-        // Notificación de éxito
-        const { $toast } = useNuxtApp();
-        $toast.success('¡Bienvenido de vuelta!', {
-          description: `Hola ${userData.username}, has iniciado sesión correctamente.`,
-        });
+        // Notificación de éxito (comentado temporalmente para debugging)
+        // const { $toast } = useNuxtApp();
+        // ($toast as any).success('¡Bienvenido de vuelta!', {
+        //   description: `Hola ${userData.firstName}, has iniciado sesión correctamente.`,
+        // });
+        console.log('Login successful!');
 
         return true;
       } else {
-        error.value = response.message || 'Error al iniciar sesión';
+        console.log('Response validation failed:', response);
+        error.value = response?.message || 'Error al iniciar sesión';
         return false;
       }
     } catch (err: any) {
-      error.value = err.data?.message || 'Error de conexión';
-      console.error('Login error:', err);
+      console.error('Login error details:', err);
+      error.value = err?.data?.message || err?.message || 'Error de conexión';
       return false;
     } finally {
       isLoading.value = false;
@@ -109,28 +124,32 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
+      const config = useRuntimeConfig();
       const response = await $fetch<ApiResponse<AuthResponse>>(
         '/api/auth/register',
         {
           method: 'POST',
           body: userData,
+          baseURL: config.public.apiBase,
         }
       );
 
       if (response.success && response.data) {
-        const { user: newUser, token, refreshToken } = response.data;
+        const { user: newUser, token } = response.data;
 
-        // Guardar tokens
+        // Guardar token
         localStorage.setItem(tokenKey, token);
-        localStorage.setItem(refreshTokenKey, refreshToken);
+        if (response.data.refreshToken) {
+          localStorage.setItem(refreshTokenKey, response.data.refreshToken);
+        }
 
         // Establecer usuario
         user.value = newUser;
 
         // Notificación de éxito
         const { $toast } = useNuxtApp();
-        $toast.success('¡Cuenta creada exitosamente!', {
-          description: `Bienvenido ${newUser.username}, tu cuenta ha sido creada.`,
+        ($toast as any).success('¡Cuenta creada exitosamente!', {
+          description: `Bienvenido ${newUser.firstName}, tu cuenta ha sido creada.`,
         });
 
         return true;

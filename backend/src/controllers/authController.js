@@ -79,9 +79,12 @@ class AuthController {
       const token = await userService.generateToken(user.id);
 
       res.status(201).json({
+        success: true,
         message: 'User registered successfully',
-        user: user.toJSON(),
-        token,
+        data: {
+          user: user.toJSON(),
+          token,
+        },
       });
     } catch (error) {
       next(error);
@@ -147,9 +150,12 @@ class AuthController {
       const token = await userService.generateToken(user.id);
 
       res.json({
+        success: true,
         message: 'Login successful',
-        user: user.toJSON(),
-        token,
+        data: {
+          user: user.toJSON(),
+          token,
+        },
       });
     } catch (error) {
       next(error);
