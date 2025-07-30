@@ -84,10 +84,18 @@ export const useAuth = () => {
         console.log('Response validation passed, processing login...');
         const { user: userData, token } = response.data;
 
-        // Guardar token
+        // Guardar token en localStorage
         localStorage.setItem(tokenKey, token);
         if (response.data.refreshToken) {
           localStorage.setItem(refreshTokenKey, response.data.refreshToken);
+        }
+
+        // Guardar token en cookies de Nuxt para middleware
+        const tokenCookie = useCookie('vocali_token');
+        const refreshTokenCookie = useCookie('vocali_refresh_token');
+        tokenCookie.value = token;
+        if (response.data.refreshToken) {
+          refreshTokenCookie.value = response.data.refreshToken;
         }
 
         // Establecer usuario
@@ -109,7 +117,15 @@ export const useAuth = () => {
       }
     } catch (err: any) {
       console.error('Login error details:', err);
-      error.value = err?.data?.message || err?.message || 'Error de conexión';
+      
+      // Manejar errores de fetch que incluyen respuestas del servidor
+      if (err.data) {
+        console.error('Server error response:', err.data);
+        error.value = err.data.message || 'Error del servidor';
+      } else {
+        error.value = err?.message || 'Error de conexión';
+      }
+      
       return false;
     } finally {
       isLoading.value = false;
@@ -137,10 +153,18 @@ export const useAuth = () => {
       if (response.success && response.data) {
         const { user: newUser, token } = response.data;
 
-        // Guardar token
+        // Guardar token en localStorage
         localStorage.setItem(tokenKey, token);
         if (response.data.refreshToken) {
           localStorage.setItem(refreshTokenKey, response.data.refreshToken);
+        }
+
+        // Guardar token en cookies de Nuxt para middleware
+        const tokenCookie = useCookie('vocali_token');
+        const refreshTokenCookie = useCookie('vocali_refresh_token');
+        tokenCookie.value = token;
+        if (response.data.refreshToken) {
+          refreshTokenCookie.value = response.data.refreshToken;
         }
 
         // Establecer usuario
@@ -190,8 +214,31 @@ export const useAuth = () => {
       localStorage.removeItem(tokenKey);
       localStorage.removeItem(refreshTokenKey);
 
-      // Redireccionar al login
-      await navigateTo('/auth/login');
+      // Limpiar cookies de Nuxt más agresivamente
+      if (process.client) {
+        console.log('🧹 Limpiando cookies...');
+        console.log('- Cookie antes:', document.cookie);
+
+        const tokenCookie = useCookie('vocali_token');
+        const refreshTokenCookie = useCookie('vocali_refresh_token');
+        tokenCookie.value = null;
+        refreshTokenCookie.value = null;
+
+        // También limpiar cookies del navegador directamente
+        document.cookie =
+          'vocali_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie =
+          'vocali_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+        console.log('- Cookie después:', document.cookie);
+        console.log(
+          '- LocalStorage después:',
+          localStorage.getItem('vocali_token')
+        );
+      }
+
+      // Redireccionar a la página de inicio
+      await navigateTo('/');
 
       // Notificación
       const { $toast } = useNuxtApp();

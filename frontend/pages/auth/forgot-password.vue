@@ -27,6 +27,18 @@
           @resend="handleResend"
           ref="forgotPasswordFormRef"
         />
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            ¿Recordaste tu contraseña?
+            <NuxtLink
+              to="/"
+              class="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Volver al login
+            </NuxtLink>
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -36,12 +48,15 @@
 import { ref } from 'vue';
 
 const forgotPasswordFormRef = ref();
+const { requestPasswordReset } = useAuth();
 
 const handleForgotPassword = async (email: string) => {
   try {
-    console.log('Forgot password attempt:', email);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const success = Math.random() > 0.1;
+    console.log('🚀 Solicitando recuperación de contraseña para:', email);
+    forgotPasswordFormRef.value?.setLoading(true);
+
+    const success = await requestPasswordReset(email);
+    console.log('✅ Resultado de recuperación:', success);
 
     if (success) {
       forgotPasswordFormRef.value?.setSuccess(
@@ -53,11 +68,12 @@ const handleForgotPassword = async (email: string) => {
         'No encontramos una cuenta con este correo electrónico.'
       );
     }
-  } catch (error) {
-    console.error('Forgot password error:', error);
+  } catch (error: any) {
+    console.error('💥 Error en recuperación de contraseña:', error);
     forgotPasswordFormRef.value?.setError(
       'general',
-      'Error del servidor. Inténtalo de nuevo más tarde.'
+      error?.data?.message ||
+        'Error del servidor. Inténtalo de nuevo más tarde.'
     );
   } finally {
     forgotPasswordFormRef.value?.setLoading(false);
@@ -66,17 +82,10 @@ const handleForgotPassword = async (email: string) => {
 
 const handleResend = async (email: string) => {
   try {
-    console.log('Resend password reset:', email);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    forgotPasswordFormRef.value?.setSuccess(
-      `Se ha reenviado el enlace de recuperación a ${email}.`
-    );
+    console.log('🔄 Reenviando enlace de recuperación a:', email);
+    await handleForgotPassword(email); // Reutilizar la misma lógica
   } catch (error) {
-    console.error('Resend error:', error);
-    forgotPasswordFormRef.value?.setError(
-      'general',
-      'Error al reenviar el enlace.'
-    );
+    console.error('Error reenviando:', error);
   }
 };
 </script>

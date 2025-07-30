@@ -62,7 +62,7 @@
           id="remember"
           v-model="form.remember"
           type="checkbox"
-          class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <label
           for="remember"
@@ -75,7 +75,7 @@
       <div class="text-sm">
         <NuxtLink
           to="/auth/forgot-password"
-          class="font-medium text-primary-600 hover:text-primary-500"
+          class="font-medium text-blue-600 hover:text-blue-500"
         >
           ¿Olvidaste tu contraseña?
         </NuxtLink>
@@ -86,7 +86,7 @@
       <button
         type="submit"
         :disabled="loading"
-        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span
           v-if="loading"
@@ -94,7 +94,7 @@
         >
           <Icon
             name="heroicons:arrow-path"
-            class="h-5 w-5 text-primary-500 animate-spin"
+            class="h-5 w-5 text-blue-500 animate-spin"
           />
         </span>
         {{ loading ? 'Iniciando sesión...' : 'Iniciar sesión' }}

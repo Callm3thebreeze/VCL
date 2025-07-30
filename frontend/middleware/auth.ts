@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const isAuthenticated = useCookie('vocali_token').value;
 
   if (!isAuthenticated) {
-    // Redirigir a login si no está autenticado
-    return navigateTo('/login');
+    // Redirigir a la página de inicio (login) si no está autenticado
+    return navigateTo('/');
   }
 });

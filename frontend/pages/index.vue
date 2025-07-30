@@ -23,7 +23,7 @@
       >
         <LoginForm @submit="handleLogin" ref="loginFormRef" />
 
-        <div class="mt-6 text-center">
+        <div class="mt-6 text-center space-y-3">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             ¿No tienes cuenta?
             <NuxtLink
@@ -66,7 +66,8 @@ const handleLogin = async (credentials: {
     console.error('💥 Error en login:', error);
     loginFormRef.value?.setError(
       'general',
-      error?.data?.message || 'Error del servidor. Inténtalo de nuevo más tarde.'
+      error?.data?.message ||
+        'Error del servidor. Inténtalo de nuevo más tarde.'
     );
   } finally {
     loginFormRef.value?.setLoading(false);

@@ -7,20 +7,9 @@
 </template>
 
 <script setup lang="ts">
-// Layout por defecto de Vocali
-const isLoading = ref(false);
-
-// Para evitar errores mientras no existe useAuth, creamos un stub temporal
-const isAuthenticated = ref(false);
-const initAuth = async () => {
-  // Implementar inicialización de auth
-  console.log('Initializing auth...');
-};
-
-// Inicializar autenticación al cargar la app
-onMounted(async () => {
-  await initAuth();
-});
+// Layout por defecto de Vocali - Simplificado
+// Ya no necesitamos inicialización manual de auth aquí
+// porque useAuth() se gestiona automáticamente en cada página
 
 // Meta tags globales
 useHead({

@@ -14,7 +14,7 @@
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
           ¿Ya tienes cuenta?
           <NuxtLink
-            to="/auth/login"
+            to="/"
             class="font-medium text-primary-600 hover:text-primary-500"
           >
             Iniciar sesión
@@ -42,6 +42,7 @@ definePageMeta({
 });
 
 const registerFormRef = ref();
+const { register } = useAuth();
 
 const handleRegister = async (data: {
   name: string;
@@ -51,41 +52,56 @@ const handleRegister = async (data: {
   acceptTerms: boolean;
 }) => {
   try {
+    console.log('🚀 Iniciando registro con:', data.email);
     registerFormRef.value?.setLoading(true);
 
-    // Aquí iría la lógica de registro real
-    console.log('Register attempt:', data);
+    // Validar que las contraseñas coincidan
+    if (data.password !== data.confirmPassword) {
+      registerFormRef.value?.setError(
+        'confirmPassword',
+        'Las contraseñas no coinciden.'
+      );
+      return;
+    }
 
-    // Simular delay de API
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Llamar al servicio de registro
+    const success = await register({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+    });
 
-    // Simular éxito/error
-    const success = Math.random() > 0.2; // 80% de probabilidad de éxito
+    console.log('✅ Registro resultado:', success);
 
     if (success) {
-      // Redirigir a página de confirmación o login
-      await navigateTo('/auth/login?registered=true');
+      console.log('🎉 Registro exitoso, redirigiendo al dashboard...');
+      // Usar setTimeout para asegurar que las cookies se establezcan antes de navegar
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
     } else {
-      // Simular diferentes tipos de errores
-      const errorType = Math.random();
-      if (errorType < 0.5) {
-        registerFormRef.value?.setError(
-          'email',
-          'Este correo electrónico ya está registrado.'
-        );
-      } else {
-        registerFormRef.value?.setError(
-          'general',
-          'Error al crear la cuenta. Inténtalo de nuevo.'
-        );
-      }
+      console.log('❌ Registro falló');
+      registerFormRef.value?.setError('general', 'Error al crear la cuenta');
     }
-  } catch (error) {
-    console.error('Registration error:', error);
-    registerFormRef.value?.setError(
-      'general',
-      'Error del servidor. Inténtalo de nuevo más tarde.'
-    );
+  } catch (error: any) {
+    console.error('💥 Error en registro:', error);
+
+    // Manejar errores específicos del backend
+    if (
+      error?.data?.message?.includes('already exists') ||
+      error?.data?.message?.includes('ya existe')
+    ) {
+      registerFormRef.value?.setError(
+        'email',
+        'Este correo electrónico ya está registrado.'
+      );
+    } else {
+      registerFormRef.value?.setError(
+        'general',
+        error?.data?.message ||
+          'Error del servidor. Inténtalo de nuevo más tarde.'
+      );
+    }
   } finally {
     registerFormRef.value?.setLoading(false);
   }
