@@ -187,7 +187,7 @@
 
       <!-- Dialog de subida -->
       <UploadTranscriptionsDialog
-        v-if="showUploadDialog"
+        :is-open="showUploadDialog"
         @close="showUploadDialog = false"
         @uploaded="onTranscriptionUploaded"
       />
@@ -198,10 +198,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 
-// Configurar middleware de autenticación
-// definePageMeta({
-//   middleware: 'auth'
-// });
+// Configurar middleware de autenticación y layout
+definePageMeta({
+  middleware: 'auth',
+  layout: 'clean',
+});
 
 // Estado
 const showUploadDialog = ref(false);

@@ -94,11 +94,11 @@ export const useAuth = () => {
         user.value = userData;
         console.log('User set successfully:', userData);
 
-        // Notificación de éxito (comentado temporalmente para debugging)
-        // const { $toast } = useNuxtApp();
-        // ($toast as any).success('¡Bienvenido de vuelta!', {
-        //   description: `Hola ${userData.firstName}, has iniciado sesión correctamente.`,
-        // });
+        // Notificación de éxito
+        const { $toast } = useNuxtApp();
+        $toast.success('¡Bienvenido de vuelta!', {
+          description: `Hola ${userData.firstName}, has iniciado sesión correctamente.`,
+        });
         console.log('Login successful!');
 
         return true;
@@ -148,7 +148,7 @@ export const useAuth = () => {
 
         // Notificación de éxito
         const { $toast } = useNuxtApp();
-        ($toast as any).success('¡Cuenta creada exitosamente!', {
+        $toast.success('¡Cuenta creada exitosamente!', {
           description: `Bienvenido ${newUser.firstName}, tu cuenta ha sido creada.`,
         });
 

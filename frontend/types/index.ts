@@ -9,6 +9,7 @@ export interface User {
   firstName: string;
   lastName: string;
   isActive: boolean;
+  roles?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -370,6 +371,32 @@ export interface ProjectSettings {
     allowComments: boolean;
     allowDownload: boolean;
   };
+}
+
+// === TIPOS DE NOTIFICACIONES TOAST ===
+export interface ToastOptions {
+  description?: string;
+  duration?: number;
+}
+
+export interface ToastService {
+  success: (message: string, options?: ToastOptions) => void;
+  error: (message: string, options?: ToastOptions) => void;
+  warning: (message: string, options?: ToastOptions) => void;
+  info: (message: string, options?: ToastOptions) => void;
+}
+
+// === EXTENSIÓN DE NUXT APP ===
+declare module '#app' {
+  interface NuxtApp {
+    $toast: ToastService;
+  }
+}
+
+declare module 'vue' {
+  interface ComponentCustomProperties {
+    $toast: ToastService;
+  }
 }
 
 // === EXPORT POR DEFECTO ===
