@@ -124,7 +124,9 @@ export default defineNuxtConfig({
     '/api/**': {
       proxy:
         process.env.NODE_ENV === 'production'
-          ? undefined
+          ? `${
+              process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000'
+            }/api/**`
           : 'http://localhost:3000/api/**',
     },
   },
