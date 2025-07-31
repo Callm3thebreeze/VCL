@@ -57,29 +57,50 @@ jobs:
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           echo "Creating package with timestamp: $TIMESTAMP"
+          echo "Current directory: $(pwd)"
+
+          # Crear el package directamente con tar (más confiable que zip)
+          echo "Creating deployment package with tar..."
           cd backend
-          zip -r ../vocali-backend-$TIMESTAMP.zip . \
-            -x ".git/*" "uploads/*" "temp/*" "*.log" "coverage/*" "tests/*" "*.test.js"
+          tar -czf ../vocali-backend-$TIMESTAMP.tar.gz . \
+            --exclude='.git' \
+            --exclude='uploads' \
+            --exclude='temp' \
+            --exclude='*.log' \
+            --exclude='coverage' \
+            --exclude='tests' \
+            --exclude='*.test.js' || {
+            echo "❌ TAR creation failed with exit code $?"
+            exit 1
+          }
           cd ..
-          echo "Package created: vocali-backend-$TIMESTAMP.zip"
-          ls -la vocali-backend-*.zip
+
+          if [ -f "vocali-backend-$TIMESTAMP.tar.gz" ]; then
+            echo "✅ Package created successfully: vocali-backend-$TIMESTAMP.tar.gz"
+            ls -la vocali-backend-*.tar.gz
+          else
+            echo "❌ Package file not found after creation"
+            ls -la
+            exit 1
+          fi
+
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
       - name: Upload to S3 for deployment
         run: |
-          echo "Uploading package: vocali-backend-$TIMESTAMP.zip"
-          aws s3 cp vocali-backend-$TIMESTAMP.zip s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.zip
-          echo "✅ Package uploaded: vocali-backend-$TIMESTAMP.zip"
+          echo "Uploading package: vocali-backend-$TIMESTAMP.tar.gz"
+          aws s3 cp vocali-backend-$TIMESTAMP.tar.gz s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.tar.gz
+          echo "✅ Package uploaded: vocali-backend-$TIMESTAMP.tar.gz"
 
       # Opción adicional: Deploy directo a EC2 usando CodeDeploy
       - name: Trigger CodeDeploy (if configured)
         run: |
           if [ -n "${{ vars.CODEDEPLOY_APPLICATION }}" ]; then
-            echo "Triggering CodeDeploy with package: vocali-backend-$TIMESTAMP.zip"
+            echo "Triggering CodeDeploy with package: vocali-backend-$TIMESTAMP.tar.gz"
             aws deploy create-deployment \
               --application-name ${{ vars.CODEDEPLOY_APPLICATION }} \
               --deployment-group-name ${{ vars.CODEDEPLOY_GROUP }} \
-              --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.zip,bundleType=zip \
+              --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.tar.gz,bundleType=tgz \
               --description "Auto deployment from GitHub Actions - develop branch"
             echo "✅ CodeDeploy deployment triggered"
           else
