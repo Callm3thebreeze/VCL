@@ -1,9 +1,3 @@
-/**
- * Configuración principal de Nuxt 3 para Vocali
- *
- * @description Configuración para una SPA/SSR híbrida con TypeScript,
- * TailwindCSS, Element Plus, i18n y Pinia para gestión de estado.
- */
 export default defineNuxtConfig({
   // Fecha de compatibilidad para Nitro
   compatibilityDate: '2025-07-29',
@@ -44,26 +38,23 @@ export default defineNuxtConfig({
     themes: ['dark'],
   },
 
-  // Variables de entorno runtime
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
-      appName: 'Vocali',
+      appName: 'iVocal',
       appVersion: process.env.npm_package_version || '1.0.0',
     },
   },
 
-  // Configuración del servidor de desarrollo
   devServer: {
     port: 3001,
     host: 'localhost',
   },
 
-  // Configuración del head de la aplicación
   app: {
     head: {
-      title: 'Vocali - Transcripción de Audio',
-      titleTemplate: '%s | Vocali',
+      title: 'iVocal - Transcripción de Audio',
+      titleTemplate: '%s | iVocal',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -75,7 +66,7 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'theme-color', content: '#3b82f6' },
         // Open Graph
-        { property: 'og:title', content: 'Vocali - Transcripción de Audio' },
+        { property: 'og:title', content: 'iVocal - Transcripción de Audio' },
         {
           property: 'og:description',
           content: 'Plataforma de transcripción de audio profesional',
@@ -84,7 +75,7 @@ export default defineNuxtConfig({
         { property: 'og:locale', content: 'es_ES' },
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Vocali - Transcripción de Audio' },
+        { name: 'twitter:title', content: 'iVocal - Transcripción de Audio' },
         {
           name: 'twitter:description',
           content: 'Plataforma de transcripción de audio profesional',
@@ -114,12 +105,10 @@ export default defineNuxtConfig({
     },
   },
 
-  // Configuración de Pinia
   pinia: {
     storesDirs: ['./stores/**'],
   },
 
-  // Configuración de build
   nitro: {
     compressPublicAssets: true,
     experimental: {
@@ -127,10 +116,8 @@ export default defineNuxtConfig({
     },
   },
 
-  // Configuración de SSR
   ssr: true,
 
-  // Configuración de Vite
   vite: {
     css: {
       preprocessorOptions: {
@@ -144,15 +131,13 @@ export default defineNuxtConfig({
     },
   },
 
-  // Configuración de auto-importación
   imports: {
     dirs: ['composables/**'],
   },
 
-  // Hooks del ciclo de vida
   hooks: {
     'build:before': () => {
-      console.log('🚀 Iniciando build de Vocali Frontend...');
+      console.log('🚀 Iniciando build de iVocal Frontend...');
     },
   },
 });
