@@ -65,8 +65,14 @@ const handleRegister = async (data: {
     }
 
     // Llamar al servicio de registro
+    // Separar el nombre completo en firstName y lastName
+    const nameParts = data.name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || firstName; // Si no hay apellido, usar el nombre
+
     const success = await register({
-      name: data.name,
+      firstName,
+      lastName,
       email: data.email,
       password: data.password,
     });
