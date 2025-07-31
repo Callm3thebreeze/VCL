@@ -79,6 +79,9 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ vars.SUPABASE_SERVICE_KEY_PROD }}
           JWT_SECRET: ${{ vars.JWT_SECRET_PROD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'test-key-for-ci' }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_S3_BUCKET: 'test-bucket'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
