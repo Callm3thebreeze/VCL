@@ -9,7 +9,7 @@ class TranscriptionController {
   constructor() {
     this.transcriptionService = new TranscriptionService();
     this.fileService = new FileService();
-    
+
     // Configurar multer para uploads temporales
     this.upload = multer({
       dest: path.join(config.upload.uploadDir, 'temp'),
@@ -20,7 +20,13 @@ class TranscriptionController {
         if (this.fileService.isValidAudioFile(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new Error(`Invalid file type. Allowed types: ${config.upload.allowedTypes.join(', ')}`));
+          cb(
+            new Error(
+              `Invalid file type. Allowed types: ${config.upload.allowedTypes.join(
+                ', '
+              )}`
+            )
+          );
         }
       },
     });
@@ -67,24 +73,15 @@ class TranscriptionController {
       const { language = 'es' } = req.body;
       const userId = req.user.id;
 
-      console.log(`📤 Usuario ${userId} subiendo archivo: ${req.file.originalname}`);
-
-      // Guardar archivo permanentemente
-      const fileData = await this.fileService.saveToLocal(
-        req.file.path,
-        req.file.originalname,
-        req.file.mimetype,
-        userId
+      console.log(
+        `📤 Usuario ${userId} subiendo archivo: ${req.file.originalname}`
       );
 
-      // Crear registro de archivo de audio
-      const audioFile = await this.fileService.createAudioFile({
-        originalFilename: req.file.originalname,
-        storedFilename: fileData.storedFilename,
-        filePath: fileData.filePath,
-        fileSize: fileData.fileSize,
-        mimeType: req.file.mimetype,
-      }, userId);
+      // Procesar upload completo (guardar archivo + crear registro DB)
+      const audioFile = await this.fileService.processFileUpload(
+        userId,
+        req.file
+      );
 
       // Crear registro de transcripción
       const transcription = await this.transcriptionService.createTranscription(
@@ -105,13 +102,12 @@ class TranscriptionController {
           fileName: req.file.originalname,
         },
       });
-
     } catch (error) {
       // Limpiar archivo temporal si existe
       if (req.file?.path) {
         await fs.remove(req.file.path).catch(() => {});
       }
-      
+
       console.error('Upload error:', error);
       next(error);
     }
@@ -120,11 +116,23 @@ class TranscriptionController {
   /**
    * Process transcription asynchronously
    */
-  async processTranscriptionAsync(transcriptionId, _language = 'es') {
+  async processTranscriptionAsync(transcriptionId, language = 'es') {
     try {
+      // Actualizar la transcripción con el idioma especificado
+      await this.transcriptionService.updateTranscriptionStatus(
+        transcriptionId,
+        'pending',
+        {
+          language: language,
+        }
+      );
+
       await this.transcriptionService.processTranscription(transcriptionId);
     } catch (error) {
-      console.error(`Background transcription failed for ${transcriptionId}:`, error);
+      console.error(
+        `Background transcription failed for ${transcriptionId}:`,
+        error
+      );
     }
   }
 
@@ -161,16 +169,17 @@ class TranscriptionController {
       const userId = req.user.id;
       const { status, limit = 50, offset = 0 } = req.query;
 
-      const transcriptions = await this.transcriptionService.getUserTranscriptions(
-        userId,
-        { status, limit: parseInt(limit), offset: parseInt(offset) }
-      );
+      const transcriptions =
+        await this.transcriptionService.getUserTranscriptions(userId, {
+          status,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+        });
 
       res.json({
         success: true,
         data: transcriptions,
       });
-
     } catch (error) {
       next(error);
     }
@@ -201,10 +210,11 @@ class TranscriptionController {
       const { id } = req.params;
       const userId = req.user.id;
 
-      const transcription = await this.transcriptionService.getTranscriptionWithAudioFile(
-        parseInt(id),
-        userId
-      );
+      const transcription =
+        await this.transcriptionService.getTranscriptionWithAudioFile(
+          parseInt(id),
+          userId
+        );
 
       if (!transcription) {
         return res.status(404).json({
@@ -217,7 +227,6 @@ class TranscriptionController {
         success: true,
         data: transcription,
       });
-
     } catch (error) {
       next(error);
     }
@@ -249,10 +258,11 @@ class TranscriptionController {
       const userId = req.user.id;
 
       // Obtener información de la transcripción antes de eliminar
-      const transcription = await this.transcriptionService.getTranscriptionWithAudioFile(
-        parseInt(id),
-        userId
-      );
+      const transcription =
+        await this.transcriptionService.getTranscriptionWithAudioFile(
+          parseInt(id),
+          userId
+        );
 
       if (!transcription) {
         return res.status(404).json({
@@ -266,14 +276,16 @@ class TranscriptionController {
 
       // Eliminar archivo de audio si no tiene otras transcripciones
       if (transcription.audioFile) {
-        await this.fileService.deleteAudioFile(transcription.audioFile.id, userId);
+        await this.fileService.deleteAudioFile(
+          transcription.audioFile.id,
+          userId
+        );
       }
 
       res.json({
         success: true,
         message: 'Transcription deleted successfully',
       });
-
     } catch (error) {
       next(error);
     }

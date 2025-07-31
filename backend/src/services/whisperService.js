@@ -5,7 +5,17 @@ const config = require('../config/config');
 class WhisperService {
   constructor() {
     if (!config.openai.apiKey) {
-      throw new Error('OpenAI API key is required for Whisper service');
+      throw new Error(`
+❌ ERROR CRÍTICO: OpenAI API key is required for Whisper service
+
+Para solucionar este error:
+1. Obtén una API key de OpenAI en: https://platform.openai.com/api-keys
+2. Crea un archivo .env en la raíz del proyecto
+3. Agrega la línea: OPENAI_API_KEY=tu_clave_aqui
+4. Reinicia el servidor
+
+Sin esta clave, las transcripciones NO funcionarán.
+      `);
     }
 
     this.openai = new OpenAI({
@@ -47,8 +57,12 @@ class WhisperService {
         model: config.openai.whisperModel,
         language: options.language || config.openai.whisperLanguage,
         response_format: 'verbose_json', // Incluye timestamps y metadata
-        timestamp_granularities: ['word'], // Timestamps por palabra
       };
+
+      // Solo agregar timestamp_granularities si el response_format lo soporta
+      if (transcriptionParams.response_format === 'verbose_json') {
+        transcriptionParams.timestamp_granularities = ['word'];
+      }
 
       console.log(`🚀 Enviando a OpenAI Whisper...`);
       const startTime = Date.now();
@@ -86,13 +100,19 @@ class WhisperService {
    * @returns {number} Average confidence (0-1)
    */
   calculateAverageConfidence(words) {
-    if (!words || words.length === 0) return 0;
+    if (!words || words.length === 0) return 0.8; // Default confidence when no word data
 
-    const confidenceSum = words.reduce((sum, word) => {
-      return sum + (word.confidence || 0);
+    const wordsWithConfidence = words.filter(
+      (word) => word.confidence !== undefined && word.confidence !== null
+    );
+
+    if (wordsWithConfidence.length === 0) return 0.8; // Default when no confidence data
+
+    const confidenceSum = wordsWithConfidence.reduce((sum, word) => {
+      return sum + word.confidence;
     }, 0);
 
-    return confidenceSum / words.length;
+    return confidenceSum / wordsWithConfidence.length;
   }
 
   /**

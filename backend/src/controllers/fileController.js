@@ -1,5 +1,5 @@
-const fileService = require('../services/fileService');
-const transcriptionService = require('../services/transcriptionService');
+const FileService = require('../services/fileService');
+const TranscriptionService = require('../services/transcriptionService');
 const { validateRequest } = require('../middleware/validation');
 const {
   paginationSchema,
@@ -7,6 +7,11 @@ const {
 } = require('../schemas/validationSchemas');
 
 class FileController {
+  constructor() {
+    this.fileService = new FileService();
+    this.transcriptionService = new TranscriptionService();
+  }
+
   /**
    * @swagger
    * /api/files/upload:
@@ -52,19 +57,19 @@ class FileController {
   async uploadFile(req, res, next) {
     try {
       // Process file upload to S3 and create database record
-      const audioFile = await fileService.processFileUpload(
+      const audioFile = await this.this.fileService.processFileUpload(
         req.user.id,
         req.file
       );
 
       // Create transcription record
-      const transcription = await transcriptionService.createTranscription(
+      const transcription = await this.transcriptionService.createTranscription(
         audioFile.id,
         req.user.id
       );
 
       // Start transcription processing (non-blocking)
-      transcriptionService
+      this.transcriptionService
         .processTranscription(transcription.id)
         .catch((error) => {
           console.error('Transcription processing failed:', error);
@@ -135,14 +140,14 @@ class FileController {
       const { page, limit } = req.query;
       const offset = (page - 1) * limit;
 
-      const files = await fileService.getUserAudioFiles(
+      const files = await this.this.fileService.getUserAudioFiles(
         req.user.id,
         limit,
         offset
       );
 
       // Get total count for pagination
-      const stats = await fileService.getUserFileStats(req.user.id);
+      const stats = await this.this.fileService.getUserFileStats(req.user.id);
 
       res.json({
         files: files.map((file) => file.toJSON()),
@@ -189,7 +194,7 @@ class FileController {
   async getFile(req, res, next) {
     try {
       const fileId = req.params.id;
-      const file = await fileService.getAudioFileByUserAndId(
+      const file = await this.this.fileService.getAudioFileByUserAndId(
         req.user.id,
         fileId
       );
@@ -246,7 +251,7 @@ class FileController {
   async getDownloadUrl(req, res, next) {
     try {
       const fileId = req.params.id;
-      const file = await fileService.getAudioFileByUserAndId(
+      const file = await this.fileService.getAudioFileByUserAndId(
         req.user.id,
         fileId
       );
@@ -260,7 +265,7 @@ class FileController {
       }
 
       // Generate presigned URL for download (valid for 1 hour)
-      const downloadUrl = await fileService.generatePresignedUrl(
+      const downloadUrl = await this.fileService.generatePresignedUrl(
         file.s3Key,
         3600
       );
@@ -303,7 +308,10 @@ class FileController {
   async deleteFile(req, res, next) {
     try {
       const fileId = req.params.id;
-      const deleted = await fileService.deleteAudioFile(req.user.id, fileId);
+      const deleted = await this.fileService.deleteAudioFile(
+        req.user.id,
+        fileId
+      );
 
       if (!deleted) {
         return res.status(404).json({
@@ -350,7 +358,7 @@ class FileController {
    */
   async getFileStats(req, res, next) {
     try {
-      const stats = await fileService.getUserFileStats(req.user.id);
+      const stats = await this.fileService.getUserFileStats(req.user.id);
       res.json(stats);
     } catch (error) {
       next(error);
@@ -358,27 +366,4 @@ class FileController {
   }
 }
 
-const fileController = new FileController();
-
-// Apply validation middleware to methods
-fileController.getFiles = [
-  validateRequest(paginationSchema, 'query'),
-  fileController.getFiles.bind(fileController),
-];
-
-fileController.getFile = [
-  validateRequest(fileIdSchema, 'params'),
-  fileController.getFile.bind(fileController),
-];
-
-fileController.getDownloadUrl = [
-  validateRequest(fileIdSchema, 'params'),
-  fileController.getDownloadUrl.bind(fileController),
-];
-
-fileController.deleteFile = [
-  validateRequest(fileIdSchema, 'params'),
-  fileController.deleteFile.bind(fileController),
-];
-
-module.exports = fileController;
+module.exports = FileController;

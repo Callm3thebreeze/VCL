@@ -9,7 +9,7 @@ export const useApi = () => {
   const config = useRuntimeConfig();
 
   // Base URL de la API
-  const baseURL = config.public.apiBase || 'http://localhost:3001';
+  const baseURL = config.public.apiBase || 'http://localhost:3000';
 
   /**
    * Función helper para hacer peticiones autenticadas

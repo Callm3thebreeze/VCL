@@ -40,7 +40,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
+      apiBase: 'http://localhost:3000',
       appName: 'iVocal',
       appVersion: process.env.npm_package_version || '1.0.0',
     },
@@ -114,6 +114,10 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true,
     },
+  },
+
+  routeRules: {
+    '/api/**': { proxy: 'http://localhost:3000/api/**' },
   },
 
   ssr: true,

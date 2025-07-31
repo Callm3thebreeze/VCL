@@ -74,7 +74,6 @@ export const useAuth = () => {
         {
           method: 'POST',
           body: credentials,
-          baseURL: config.public.apiBase,
         }
       );
 
@@ -117,7 +116,7 @@ export const useAuth = () => {
       }
     } catch (err: any) {
       console.error('Login error details:', err);
-      
+
       // Manejar errores de fetch que incluyen respuestas del servidor
       if (err.data) {
         console.error('Server error response:', err.data);
@@ -125,7 +124,7 @@ export const useAuth = () => {
       } else {
         error.value = err?.message || 'Error de conexión';
       }
-      
+
       return false;
     } finally {
       isLoading.value = false;
@@ -146,7 +145,6 @@ export const useAuth = () => {
         {
           method: 'POST',
           body: userData,
-          baseURL: config.public.apiBase,
         }
       );
 
