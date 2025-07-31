@@ -13,7 +13,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-package-lock.json
+# package-lock.json  # Comentado - necesario para CI/CD
 yarn.lock
 pnpm-lock.yaml
 
@@ -359,7 +359,7 @@ target/
 # PACKAGE MANAGERS
 # ====================================
 # npm
-package-lock.json
+# package-lock.json  # Comentado - necesario para CI/CD
 
 # Yarn
 yarn.lock

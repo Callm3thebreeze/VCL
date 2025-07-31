@@ -13,25 +13,18 @@ jobs:
     name: Deploy frontend production
     runs-on: ubuntu-24.04
     environment: production
-    container:
-      image: python:latest
     steps:
-      - run: apt-get update
-      - run: apt-get install curl git-all -y
-      - run: pip install awscli
       - uses: actions/checkout@v4
-
-      - name: Copy .env for frontend
-        working-directory: ./frontend
-        run: echo "${{ vars.FRONTEND_ENV_PROD }}" >> .env
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.11.1
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm install
+        run: npm ci
 
       - name: Build frontend application
         working-directory: ./frontend
@@ -41,42 +34,42 @@ jobs:
           NUXT_PUBLIC_APP_NAME: 'iVocal'
           NUXT_PUBLIC_ENVIRONMENT: 'production'
 
-      - name: Set AWS Credentials
-        run: |
-          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY_ID }} &&
-          aws configure set aws_secret_access_key ${{ vars.AWS_SECRET_ACCESS_KEY }} &&
-          aws configure set region ${{ vars.AWS_DEFAULT_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy to S3
         working-directory: ./frontend
         run: aws s3 sync .output/public/ s3://${{ vars.S3_FRONTEND_BUCKET_PROD }} --delete --cache-control max-age=31536000,public
 
-      - name: Invalidate CloudFront
-        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID_PROD }} --paths "/*"
+      - name: Invalidate CloudFront (if configured)
+        run: |
+          if [ -n "${{ vars.CLOUDFRONT_DISTRIBUTION_ID_PROD }}" ]; then
+            aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID_PROD }} --paths "/*"
+            echo "✅ CloudFront invalidation created"
+          else
+            echo "⚠️ CloudFront distribution ID not configured, skipping invalidation"
+          fi
 
   deploy_backend_production:
     name: Deploy backend production
     runs-on: ubuntu-24.04
     environment: production
-    container:
-      image: python:latest
     steps:
-      - run: apt-get update
-      - run: apt-get install curl git-all zip -y
-      - run: pip install awscli
       - uses: actions/checkout@v4
-
-      - name: Copy .env for backend
-        working-directory: ./backend
-        run: echo "${{ vars.BACKEND_ENV_PROD }}" >> .env
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.11.1
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
 
       - name: Install backend dependencies
         working-directory: ./backend
-        run: npm install --only=production
+        run: npm ci --only=production
 
       - name: Run backend tests
         working-directory: ./backend

@@ -1,5 +1,5 @@
 node_modules/
-package-lock.json
+# package-lock.json  # Comentado - necesario para CI/CD
 .env
 .env.local
 .env.production
