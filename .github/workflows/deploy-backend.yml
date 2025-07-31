@@ -56,7 +56,7 @@ jobs:
       - name: Create deployment package
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          echo "🔧 WORKFLOW VERSION: TAR.GZ v2.0 - Updated $(date)"
+          echo "🔧 WORKFLOW VERSION: ZIP v3.0 - Updated $(date)"
           echo "Creating package with timestamp: $TIMESTAMP"
           echo "Current directory: $(pwd)"
           echo "Available commands:"
@@ -65,31 +65,32 @@ jobs:
           echo "Files in current directory:"
           ls -la
 
-          # Crear el package directamente con tar (más confiable que zip)
-          echo "Creating deployment package with tar..."
+          # Crear el package con zip (ignorando .gitignore temporalmente)
+          echo "Creating deployment package with zip..."
           cd backend
           echo "Files in backend directory:"
           ls -la | head -10
-          tar -czf ../vocali-backend-$TIMESTAMP.tar.gz . \
-            --exclude='.git' \
-            --exclude='uploads' \
-            --exclude='temp' \
-            --exclude='*.log' \
-            --exclude='coverage' \
-            --exclude='tests' \
-            --exclude='*.test.js' || {
-            echo "❌ TAR creation failed with exit code $?"
+
+          # Crear zip con exclusiones explícitas
+          zip -r ../vocali-backend-$TIMESTAMP.zip . \
+            -x ".git/*" "uploads/*" "temp/*" "*.log" "coverage/*" "tests/*" "*.test.js" \
+            -x "node_modules/.cache/*" || {
+            echo "❌ ZIP creation failed with exit code $?"
             exit 1
           }
           cd ..
 
-          if [ -f "vocali-backend-$TIMESTAMP.tar.gz" ]; then
-            echo "✅ Package created successfully: vocali-backend-$TIMESTAMP.tar.gz"
-            ls -la vocali-backend-*.tar.gz
+          # Verificar si el archivo se creó (independientemente del .gitignore)
+          echo "Checking for created package..."
+          if [ -f "vocali-backend-$TIMESTAMP.zip" ]; then
+            echo "✅ Package created successfully: vocali-backend-$TIMESTAMP.zip"
+            ls -la vocali-backend-*.zip
           else
             echo "❌ Package file not found after creation"
             echo "All files in current directory:"
             ls -la
+            echo "Checking if file exists with different name:"
+            ls -la *.zip 2>/dev/null || echo "No zip files found"
             exit 1
           fi
 
@@ -97,19 +98,19 @@ jobs:
 
       - name: Upload to S3 for deployment
         run: |
-          echo "Uploading package: vocali-backend-$TIMESTAMP.tar.gz"
-          aws s3 cp vocali-backend-$TIMESTAMP.tar.gz s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.tar.gz
-          echo "✅ Package uploaded: vocali-backend-$TIMESTAMP.tar.gz"
+          echo "Uploading package: vocali-backend-$TIMESTAMP.zip"
+          aws s3 cp vocali-backend-$TIMESTAMP.zip s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.zip
+          echo "✅ Package uploaded: vocali-backend-$TIMESTAMP.zip"
 
       # Opción adicional: Deploy directo a EC2 usando CodeDeploy
       - name: Trigger CodeDeploy (if configured)
         run: |
           if [ -n "${{ vars.CODEDEPLOY_APPLICATION }}" ]; then
-            echo "Triggering CodeDeploy with package: vocali-backend-$TIMESTAMP.tar.gz"
+            echo "Triggering CodeDeploy with package: vocali-backend-$TIMESTAMP.zip"
             aws deploy create-deployment \
               --application-name ${{ vars.CODEDEPLOY_APPLICATION }} \
               --deployment-group-name ${{ vars.CODEDEPLOY_GROUP }} \
-              --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.tar.gz,bundleType=tgz \
+              --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.zip,bundleType=zip \
               --description "Auto deployment from GitHub Actions - develop branch"
             echo "✅ CodeDeploy deployment triggered"
           else

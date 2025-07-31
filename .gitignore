@@ -414,8 +414,8 @@ bucket-policy-*.json
 *.sln
 *.sw?
 
-# Archive files
-*.zip
+# Archive files (excluding build artifacts)
+# *.zip  # Comentado temporalmente para GitHub Actions
 *.tar.gz
 *.rar
 *.7z
