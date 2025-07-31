@@ -118,7 +118,9 @@ jobs:
           echo "6. Install deps: cd /var/www/vocali-backend && npm ci --only=production"
           echo "7. Restart: pm2 restart vocali-backend || pm2 start src/app.js --name vocali-backend"
           echo ""
-          echo "Package timestamp: $TIMESTAMP"      - name: Deployment complete
+          echo "Package timestamp: $TIMESTAMP"
+
+      - name: Deployment complete
         run: |
           echo "🚀 Backend deployment package created successfully!"
           echo "📦 Package location: s3://${{ vars.S3_DEPLOYMENT_BUCKET }}"
