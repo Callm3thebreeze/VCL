@@ -1,0 +1,61 @@
+name: Vocali Frontend Develop Deployment
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
+on:
+  push:
+    branches: [develop]
+    paths: ['frontend/**']
+  workflow_dispatch:
+
+jobs:
+  deploy_frontend_develop:
+    name: Deploy frontend develop branch
+    runs-on: ubuntu-24.04
+    environment: develop
+    container:
+      image: python:latest
+    steps:
+      - run: apt-get update
+      - run: apt-get install curl git-all -y
+      - run: pip install awscli
+      - uses: actions/checkout@v4
+
+      - name: Copy .env for frontend
+        working-directory: ./frontend
+        run: echo "${{ vars.FRONTEND_ENV }}" >> .env
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.1
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build frontend application
+        working-directory: ./frontend
+        run: npm run generate
+        env:
+          NUXT_PUBLIC_API_BASE: ${{ vars.BACKEND_URL }}
+          NUXT_PUBLIC_APP_NAME: 'iVocal'
+          NUXT_PUBLIC_ENVIRONMENT: 'develop'
+
+      - name: Set AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY_ID }} &&
+          aws configure set aws_secret_access_key ${{ vars.AWS_SECRET_ACCESS_KEY }} &&
+          aws configure set region ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Deploy to S3
+        working-directory: ./frontend
+        run: aws s3 sync .output/public/ s3://${{ vars.S3_FRONTEND_BUCKET }} --delete --cache-control max-age=31536000,public
+
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
+      - name: Deployment complete
+        run: |
+          echo "🚀 Frontend deployed successfully to develop!"
+          echo "🌐 URL: https://${{ vars.FRONTEND_DOMAIN }}"

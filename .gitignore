@@ -38,6 +38,9 @@ dist/
 .env.test.local
 .env.production.local
 .env.staging
+.env.deploy
+.env.deploy.local
+!.env*.example
 
 # Nuxt generate
 .nuxt/
@@ -267,6 +270,10 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 
+# PowerShell temporary files
+*.ps1.log
+*.ps1.bak
+
 # Linux
 *~
 .fuse_hidden*
@@ -369,6 +376,33 @@ pnpm-lock.yaml
 .github/instructions/
 *.instructions.*
 *instructions*
+
+# ====================================
+# AWS & DEPLOYMENT SCRIPTS
+# ====================================
+# AWS CLI installation scripts
+scripts/install-aws-cli.ps1
+scripts/setup-aws-infrastructure.ps1
+scripts/fix-aws-infrastructure.ps1
+scripts/final-aws-setup.ps1
+
+# AWS configuration files with sensitive data
+github-variables.txt
+github-variables-final.txt
+docs/github-variables.md
+temp-policy-*.json
+*github-variables*
+
+# AWS temporary files
+cloudfront-config-*.json
+bucket-policy-*.json
+
+# PowerShell scripts with credentials
+*.ps1
+!scripts/deploy-manual.sh
+!scripts/setup-cloudfront.sh
+!scripts/setup-ec2.sh
+!scripts/setup-infrastructure.sh
 
 # Editor directories and files
 .vscode/*

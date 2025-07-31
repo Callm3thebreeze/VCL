@@ -1,0 +1,121 @@
+name: Vocali Production Deployment
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy_frontend_production:
+    name: Deploy frontend production
+    runs-on: ubuntu-24.04
+    environment: production
+    container:
+      image: python:latest
+    steps:
+      - run: apt-get update
+      - run: apt-get install curl git-all -y
+      - run: pip install awscli
+      - uses: actions/checkout@v4
+
+      - name: Copy .env for frontend
+        working-directory: ./frontend
+        run: echo "${{ vars.FRONTEND_ENV_PROD }}" >> .env
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.1
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build frontend application
+        working-directory: ./frontend
+        run: npm run generate
+        env:
+          NUXT_PUBLIC_API_BASE: ${{ vars.BACKEND_URL_PROD }}
+          NUXT_PUBLIC_APP_NAME: 'iVocal'
+          NUXT_PUBLIC_ENVIRONMENT: 'production'
+
+      - name: Set AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY_ID }} &&
+          aws configure set aws_secret_access_key ${{ vars.AWS_SECRET_ACCESS_KEY }} &&
+          aws configure set region ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Deploy to S3
+        working-directory: ./frontend
+        run: aws s3 sync .output/public/ s3://${{ vars.S3_FRONTEND_BUCKET_PROD }} --delete --cache-control max-age=31536000,public
+
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID_PROD }} --paths "/*"
+
+  deploy_backend_production:
+    name: Deploy backend production
+    runs-on: ubuntu-24.04
+    environment: production
+    container:
+      image: python:latest
+    steps:
+      - run: apt-get update
+      - run: apt-get install curl git-all zip -y
+      - run: pip install awscli
+      - uses: actions/checkout@v4
+
+      - name: Copy .env for backend
+        working-directory: ./backend
+        run: echo "${{ vars.BACKEND_ENV_PROD }}" >> .env
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.1
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install --only=production
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          SUPABASE_URL: ${{ vars.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ vars.SUPABASE_SERVICE_KEY_PROD }}
+          JWT_SECRET: ${{ vars.JWT_SECRET_PROD }}
+
+      - name: Set AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY_ID }} &&
+          aws configure set aws_secret_access_key ${{ vars.AWS_SECRET_ACCESS_KEY }} &&
+          aws configure set region ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Create deployment package
+        run: |
+          cd backend
+          zip -r ../vocali-backend-prod-$(date +%Y%m%d-%H%M%S).zip . \
+            -x "node_modules/*" ".git/*" "uploads/*" "temp/*" "*.log" "coverage/*"
+          cd ..
+
+      - name: Upload to S3 for deployment
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          aws s3 cp vocali-backend-prod-$TIMESTAMP.zip s3://${{ vars.S3_DEPLOYMENT_BUCKET_PROD }}/vocali-backend-prod-$TIMESTAMP.zip
+
+      - name: Trigger CodeDeploy for production
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          aws deploy create-deployment \
+            --application-name ${{ vars.CODEDEPLOY_APPLICATION_PROD }} \
+            --deployment-group-name ${{ vars.CODEDEPLOY_GROUP_PROD }} \
+            --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET_PROD }},key=vocali-backend-prod-$TIMESTAMP.zip,bundleType=zip \
+            --description "Production deployment from GitHub Actions - main branch"
+
+      - name: Deployment complete
+        run: |
+          echo "🚀 Production deployment completed successfully!"
+          echo "🌐 Frontend: https://${{ vars.FRONTEND_DOMAIN_PROD }}"
+          echo "📡 Backend: https://${{ vars.BACKEND_DOMAIN_PROD }}"

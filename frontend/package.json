@@ -16,7 +16,9 @@
     "test:coverage": "vitest --coverage",
     "e2e": "cypress open",
     "e2e:run": "cypress run",
-    "type-check": "nuxt typecheck"
+    "type-check": "nuxt typecheck",
+    "deploy:prod": "npm run generate && aws s3 sync .output/public/ s3://vocali-frontend-production --delete",
+    "invalidate:cloudfront": "aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths '/*'"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
