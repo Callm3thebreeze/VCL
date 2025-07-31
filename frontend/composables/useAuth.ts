@@ -12,6 +12,12 @@ import type {
 } from '~/types';
 
 export const useAuth = () => {
+  // Helper para construir URLs completas del API
+  const buildApiUrl = (endpoint: string) => {
+    const config = useRuntimeConfig();
+    return `${config.public.apiBase}${endpoint}`;
+  };
+
   // Estado reactivo
   const user = ref<User | null>(null);
   const isAuthenticated = computed(() => !!user.value);
@@ -33,11 +39,14 @@ export const useAuth = () => {
 
     try {
       isLoading.value = true;
-      const response = await $fetch<ApiResponse<User>>('/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await $fetch<ApiResponse<User>>(
+        buildApiUrl('/api/auth/me'),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.success && response.data) {
         user.value = response.data;
@@ -64,18 +73,13 @@ export const useAuth = () => {
       error.value = null;
 
       const config = useRuntimeConfig();
-      console.log(
-        'Attempting login to:',
-        `${config.public.apiBase}/api/auth/login`
-      );
+      const apiUrl = `${config.public.apiBase}/api/auth/login`;
+      console.log('Attempting login to:', apiUrl);
 
-      const response = await $fetch<ApiResponse<AuthResponse>>(
-        '/api/auth/login',
-        {
-          method: 'POST',
-          body: credentials,
-        }
-      );
+      const response = await $fetch<ApiResponse<AuthResponse>>(apiUrl, {
+        method: 'POST',
+        body: credentials,
+      });
 
       console.log('Login response:', response);
 
@@ -139,9 +143,8 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
-      const config = useRuntimeConfig();
       const response = await $fetch<ApiResponse<AuthResponse>>(
-        '/api/auth/register',
+        buildApiUrl('/api/auth/register'),
         {
           method: 'POST',
           body: userData,
@@ -197,7 +200,7 @@ export const useAuth = () => {
 
       if (token) {
         // Llamar al endpoint de logout para invalidar el token
-        await $fetch('/api/auth/logout', {
+        await $fetch(buildApiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
