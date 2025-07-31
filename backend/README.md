@@ -2,6 +2,8 @@
 
 Backend para la plataforma de transcripción de audio Vocali, desarrollado con Node.js, Express y MySQL.
 
+**Última actualización**: 31/07/2025 - Workflow actualizado a tar.gz
+
 ## Características
 
 - 🔐 **Autenticación completa** con JWT y bcrypt
