@@ -67,9 +67,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './backend/package-lock.json'
 
-      - name: Install backend dependencies
+      - name: Install backend dependencies (including dev for tests)
         working-directory: ./backend
-        run: npm ci --only=production
+        run: npm ci
 
       - name: Run backend tests
         working-directory: ./backend
@@ -78,6 +78,21 @@ jobs:
           NODE_ENV: test
           SUPABASE_URL: ${{ vars.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ vars.SUPABASE_SERVICE_KEY_PROD }}
+          JWT_SECRET: ${{ vars.JWT_SECRET_PROD }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install production dependencies for package
+        working-directory: ./backend
+        run: |
+          # Limpiar node_modules y reinstalar solo producción para el package
+          rm -rf node_modules
+          npm ci --only=production
           JWT_SECRET: ${{ vars.JWT_SECRET_PROD }}
 
       - name: Set AWS Credentials

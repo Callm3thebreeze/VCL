@@ -14,25 +14,18 @@ jobs:
     name: Deploy backend develop branch
     runs-on: ubuntu-24.04
     environment: develop
-    container:
-      image: python:latest
     steps:
-      - run: apt-get update
-      - run: apt-get install curl git-all zip -y
-      - run: pip install awscli
       - uses: actions/checkout@v4
-
-      - name: Copy .env for backend
-        working-directory: ./backend
-        run: echo "${{ vars.BACKEND_ENV }}" >> .env
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.11.1
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
 
-      - name: Install backend dependencies
+      - name: Install backend dependencies (including dev)
         working-directory: ./backend
-        run: npm install --only=production
+        run: npm ci
 
       - name: Run backend tests
         working-directory: ./backend
@@ -43,17 +36,25 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ vars.SUPABASE_SERVICE_KEY }}
           JWT_SECRET: ${{ vars.JWT_SECRET }}
 
-      - name: Set AWS Credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install production dependencies for package
+        working-directory: ./backend
         run: |
-          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY_ID }} &&
-          aws configure set aws_secret_access_key ${{ vars.AWS_SECRET_ACCESS_KEY }} &&
-          aws configure set region ${{ vars.AWS_DEFAULT_REGION }}
+          # Limpiar node_modules y reinstalar solo producción para el package
+          rm -rf node_modules
+          npm ci --only=production
 
       - name: Create deployment package
         run: |
           cd backend
           zip -r ../vocali-backend-$(date +%Y%m%d-%H%M%S).zip . \
-            -x "node_modules/*" ".git/*" "uploads/*" "temp/*" "*.log" "coverage/*"
+            -x ".git/*" "uploads/*" "temp/*" "*.log" "coverage/*" "tests/*" "*.test.js"
           cd ..
 
       - name: Upload to S3 for deployment
@@ -72,8 +73,9 @@ jobs:
               --deployment-group-name ${{ vars.CODEDEPLOY_GROUP }} \
               --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.zip,bundleType=zip \
               --description "Auto deployment from GitHub Actions - develop branch"
+            echo "✅ CodeDeploy deployment triggered"
           else
-            echo "CodeDeploy not configured, manual deployment required"
+            echo "⚠️ CodeDeploy not configured, manual deployment required"
           fi
 
       - name: Deployment complete
