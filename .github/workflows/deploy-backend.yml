@@ -56,12 +56,20 @@ jobs:
       - name: Create deployment package
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          echo "🔧 WORKFLOW VERSION: TAR.GZ v2.0 - Updated $(date)"
           echo "Creating package with timestamp: $TIMESTAMP"
           echo "Current directory: $(pwd)"
+          echo "Available commands:"
+          which tar
+          which zip
+          echo "Files in current directory:"
+          ls -la
 
           # Crear el package directamente con tar (más confiable que zip)
           echo "Creating deployment package with tar..."
           cd backend
+          echo "Files in backend directory:"
+          ls -la | head -10
           tar -czf ../vocali-backend-$TIMESTAMP.tar.gz . \
             --exclude='.git' \
             --exclude='uploads' \
@@ -80,6 +88,7 @@ jobs:
             ls -la vocali-backend-*.tar.gz
           else
             echo "❌ Package file not found after creation"
+            echo "All files in current directory:"
             ls -la
             exit 1
           fi
