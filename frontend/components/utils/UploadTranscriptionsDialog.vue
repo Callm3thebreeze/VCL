@@ -255,6 +255,7 @@ const error = ref('');
 
 // Función simple para testing
 const uploadAndTranscribe = async (audioFile: File, language = 'es') => {
+  const config = useRuntimeConfig();
   const formData = new FormData();
   formData.append('audio', audioFile);
   formData.append('language', language);
@@ -262,7 +263,7 @@ const uploadAndTranscribe = async (audioFile: File, language = 'es') => {
   const token = localStorage.getItem('vocali_token');
 
   const response = await fetch(
-    'http://localhost:3000/api/transcriptions/upload',
+    `${config.public.apiBase}/api/transcriptions/upload`,
     {
       method: 'POST',
       headers: {
