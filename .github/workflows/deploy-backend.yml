@@ -102,22 +102,23 @@ jobs:
           aws s3 cp vocali-backend-$TIMESTAMP.zip s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.zip
           echo "✅ Package uploaded: vocali-backend-$TIMESTAMP.zip"
 
-      # Opción adicional: Deploy directo a EC2 usando CodeDeploy
-      - name: Trigger CodeDeploy (if configured)
+      # Notificación de deployment disponible
+      - name: Manual Deployment Instructions
         run: |
-          if [ -n "${{ vars.CODEDEPLOY_APPLICATION }}" ]; then
-            echo "Triggering CodeDeploy with package: vocali-backend-$TIMESTAMP.zip"
-            aws deploy create-deployment \
-              --application-name ${{ vars.CODEDEPLOY_APPLICATION }} \
-              --deployment-group-name ${{ vars.CODEDEPLOY_GROUP }} \
-              --s3-location bucket=${{ vars.S3_DEPLOYMENT_BUCKET }},key=vocali-backend-$TIMESTAMP.zip,bundleType=zip \
-              --description "Auto deployment from GitHub Actions - develop branch"
-            echo "✅ CodeDeploy deployment triggered"
-          else
-            echo "⚠️ CodeDeploy not configured, manual deployment required"
-          fi
-
-      - name: Deployment complete
+          echo "� Package uploaded successfully to S3!"
+          echo "🔗 Package location: s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.zip"
+          echo ""
+          echo "🚀 MANUAL DEPLOYMENT INSTRUCTIONS:"
+          echo "=================================="
+          echo "1. Connect to EC2: ssh -i vocali-backend-key.pem ubuntu@13.62.52.98"
+          echo "2. Download package: aws s3 cp s3://${{ vars.S3_DEPLOYMENT_BUCKET }}/vocali-backend-$TIMESTAMP.zip /tmp/"
+          echo "3. Extract: cd /tmp && unzip vocali-backend-$TIMESTAMP.zip -d /var/www/vocali-backend-new"
+          echo "4. Backup current: sudo mv /var/www/vocali-backend /var/www/vocali-backend-backup"
+          echo "5. Deploy new: sudo mv /var/www/vocali-backend-new /var/www/vocali-backend"
+          echo "6. Install deps: cd /var/www/vocali-backend && npm ci --only=production"
+          echo "7. Restart: pm2 restart vocali-backend || pm2 start src/app.js --name vocali-backend"
+          echo ""
+          echo "Package timestamp: $TIMESTAMP"      - name: Deployment complete
         run: |
           echo "🚀 Backend deployment package created successfully!"
           echo "📦 Package location: s3://${{ vars.S3_DEPLOYMENT_BUCKET }}"

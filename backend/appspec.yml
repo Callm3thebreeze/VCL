@@ -1,0 +1,43 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/vocali-backend
+    overwrite: yes
+permissions:
+  - object: /var/www/vocali-backend
+    owner: vocali
+    group: vocali
+    mode: 755
+    type:
+      - directory
+  - object: /var/www/vocali-backend
+    owner: vocali
+    group: vocali
+    mode: 644
+    type:
+      - file
+hooks:
+  BeforeInstall:
+    - location: scripts/stop_application.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: scripts/install_dependencies.sh
+      timeout: 600
+      runas: root
+    - location: scripts/setup_environment.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: scripts/start_application.sh
+      timeout: 300
+      runas: root
+  ApplicationStop:
+    - location: scripts/stop_application.sh
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: scripts/validate_service.sh
+      timeout: 300
+      runas: root
