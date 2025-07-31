@@ -261,7 +261,7 @@ export const useAuth = () => {
       }
 
       const response = await $fetch<ApiResponse<AuthResponse>>(
-        '/api/auth/refresh',
+        buildApiUrl('/api/auth/refresh'),
         {
           method: 'POST',
           body: { refreshToken: refresh },
@@ -296,10 +296,13 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
-      const response = await $fetch<ApiResponse<User>>('/api/auth/profile', {
-        method: 'PUT',
-        body: profileData,
-      });
+      const response = await $fetch<ApiResponse<User>>(
+        buildApiUrl('/api/auth/profile'),
+        {
+          method: 'PUT',
+          body: profileData,
+        }
+      );
 
       if (response.success && response.data) {
         user.value = response.data;
@@ -334,13 +337,16 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
-      const response = await $fetch<ApiResponse>('/api/auth/change-password', {
-        method: 'POST',
-        body: {
-          currentPassword,
-          newPassword,
-        },
-      });
+      const response = await $fetch<ApiResponse>(
+        buildApiUrl('/api/auth/change-password'),
+        {
+          method: 'POST',
+          body: {
+            currentPassword,
+            newPassword,
+          },
+        }
+      );
 
       if (response.success) {
         const { $toast } = useNuxtApp();
@@ -370,10 +376,13 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
-      const response = await $fetch<ApiResponse>('/api/auth/forgot-password', {
-        method: 'POST',
-        body: { email },
-      });
+      const response = await $fetch<ApiResponse>(
+        buildApiUrl('/api/auth/forgot-password'),
+        {
+          method: 'POST',
+          body: { email },
+        }
+      );
 
       if (response.success) {
         const { $toast } = useNuxtApp();
@@ -407,13 +416,16 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
 
-      const response = await $fetch<ApiResponse>('/api/auth/reset-password', {
-        method: 'POST',
-        body: {
-          token,
-          newPassword,
-        },
-      });
+      const response = await $fetch<ApiResponse>(
+        buildApiUrl('/api/auth/reset-password'),
+        {
+          method: 'POST',
+          body: {
+            token,
+            newPassword,
+          },
+        }
+      );
 
       if (response.success) {
         const { $toast } = useNuxtApp();
