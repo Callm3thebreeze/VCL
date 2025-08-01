@@ -217,9 +217,6 @@ export const useAuth = () => {
 
       // Limpiar cookies de Nuxt más agresivamente
       if (process.client) {
-        console.log('🧹 Limpiando cookies...');
-        console.log('- Cookie antes:', document.cookie);
-
         const tokenCookie = useCookie('vocali_token');
         const refreshTokenCookie = useCookie('vocali_refresh_token');
         tokenCookie.value = null;
@@ -230,12 +227,6 @@ export const useAuth = () => {
           'vocali_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie =
           'vocali_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-        console.log('- Cookie después:', document.cookie);
-        console.log(
-          '- LocalStorage después:',
-          localStorage.getItem('vocali_token')
-        );
       }
 
       // Redireccionar a la página de inicio
