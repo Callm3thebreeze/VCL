@@ -76,6 +76,10 @@
         <p v-if="errors.password" class="mt-2 text-sm text-red-600">
           {{ errors.password }}
         </p>
+        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          La contraseña debe tener mínimo 8 caracteres, incluir mayúsculas,
+          minúsculas, números y caracteres especiales (!@#$%^&*)
+        </p>
       </div>
     </div>
 
@@ -216,8 +220,12 @@ const validatePassword = (password: string) => {
   if (password.length < 8) {
     return 'La contraseña debe tener al menos 8 caracteres';
   }
-  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-    return 'La contraseña debe tener al menos una mayúscula, una minúscula y un número';
+  if (
+    !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(
+      password
+    )
+  ) {
+    return 'La contraseña debe tener al menos una mayúscula, una minúscula, un número y un carácter especial';
   }
   return '';
 };
