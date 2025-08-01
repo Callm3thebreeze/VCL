@@ -76,10 +76,6 @@
         <p v-if="errors.password" class="mt-2 text-sm text-red-600">
           {{ errors.password }}
         </p>
-        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          La contraseña debe tener mínimo 8 caracteres, incluir mayúsculas,
-          minúsculas, números y caracteres especiales (!@#$%^&*)
-        </p>
       </div>
     </div>
 
@@ -100,6 +96,7 @@
           class="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
           :class="{ 'border-red-300': errors.confirmPassword }"
         />
+
         <button
           type="button"
           @click="showConfirmPassword = !showConfirmPassword"
@@ -112,6 +109,7 @@
             class="h-5 w-5 text-gray-400"
           />
         </button>
+
         <p v-if="errors.confirmPassword" class="mt-2 text-sm text-red-600">
           {{ errors.confirmPassword }}
         </p>
@@ -135,6 +133,10 @@
         </span>
         {{ loading ? 'Creando cuenta...' : 'Crear cuenta' }}
       </button>
+      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        La contraseña debe tener mínimo 6 caracteres, incluir mayúsculas,
+        minúsculas, números y caracteres especiales (!@#$%^&*)
+      </p>
     </div>
 
     <div v-if="errors.general" class="mt-3">
