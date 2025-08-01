@@ -85,31 +85,6 @@
       </div>
     </div>
 
-    <!-- Información adicional -->
-    <div class="mt-6">
-      <div class="relative">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300 dark:border-gray-600" />
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span
-            class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-          >
-            ¿Recordaste tu contraseña?
-          </span>
-        </div>
-      </div>
-
-      <div class="mt-6">
-        <NuxtLink
-          to="/"
-          class="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          Volver al inicio de sesión
-        </NuxtLink>
-      </div>
-    </div>
-
     <!-- Reenviar enlace -->
     <div v-if="success && !loading" class="mt-4">
       <button

@@ -114,32 +114,6 @@
       </div>
     </div>
 
-    <div class="flex items-center">
-      <input
-        id="terms"
-        v-model="form.acceptTerms"
-        type="checkbox"
-        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        :class="{ 'border-red-300': errors.acceptTerms }"
-      />
-      <label
-        for="terms"
-        class="ml-2 block text-sm text-gray-900 dark:text-gray-300"
-      >
-        Acepto los
-        <a href="#" class="text-primary-600 hover:text-primary-500"
-          >términos y condiciones</a
-        >
-        y la
-        <a href="#" class="text-primary-600 hover:text-primary-500"
-          >política de privacidad</a
-        >
-      </label>
-    </div>
-    <p v-if="errors.acceptTerms" class="text-sm text-red-600">
-      {{ errors.acceptTerms }}
-    </p>
-
     <div>
       <button
         type="submit"
@@ -190,7 +164,6 @@ const emit = defineEmits<{
       email: string;
       password: string;
       confirmPassword: string;
-      acceptTerms: boolean;
     }
   ];
 }>();
@@ -201,7 +174,6 @@ const form = ref({
   email: '',
   password: '',
   confirmPassword: '',
-  acceptTerms: false,
 });
 
 const showPassword = ref(false);
@@ -212,7 +184,6 @@ const errors = ref({
   email: '',
   password: '',
   confirmPassword: '',
-  acceptTerms: '',
   general: '',
 });
 
@@ -261,13 +232,6 @@ const validateConfirmPassword = (password: string, confirmPassword: string) => {
   return '';
 };
 
-const validateAcceptTerms = (acceptTerms: boolean) => {
-  if (!acceptTerms) {
-    return 'Debes aceptar los términos y condiciones';
-  }
-  return '';
-};
-
 const validateForm = () => {
   errors.value.name = validateName(form.value.name);
   errors.value.email = validateEmail(form.value.email);
@@ -276,15 +240,13 @@ const validateForm = () => {
     form.value.password,
     form.value.confirmPassword
   );
-  errors.value.acceptTerms = validateAcceptTerms(form.value.acceptTerms);
   errors.value.general = '';
 
   return (
     !errors.value.name &&
     !errors.value.email &&
     !errors.value.password &&
-    !errors.value.confirmPassword &&
-    !errors.value.acceptTerms
+    !errors.value.confirmPassword
   );
 };
 
@@ -301,7 +263,6 @@ const handleRegister = async () => {
       email: form.value.email,
       password: form.value.password,
       confirmPassword: form.value.confirmPassword,
-      acceptTerms: form.value.acceptTerms,
     });
   } catch (error) {
     errors.value.general = 'Error interno del sistema. Inténtalo de nuevo.';
@@ -316,7 +277,6 @@ const watchForm = () => {
   errors.value.email = '';
   errors.value.password = '';
   errors.value.confirmPassword = '';
-  errors.value.acceptTerms = '';
   errors.value.general = '';
 };
 
@@ -336,7 +296,6 @@ defineExpose({
       email: '',
       password: '',
       confirmPassword: '',
-      acceptTerms: '',
       general: '',
     };
   },
