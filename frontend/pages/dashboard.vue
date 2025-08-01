@@ -44,10 +44,6 @@
             <Icon name="heroicons:plus" class="w-6 h-6 mr-3" />
             Nueva Transcripción
           </button>
-          <p class="mt-4 text-gray-600 dark:text-gray-400">
-            Haz clic para subir tu archivo de audio y crear una nueva
-            transcripción
-          </p>
         </div>
 
         <!-- Historial de transcripciones -->
@@ -55,9 +51,21 @@
           class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
         >
           <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Mis Transcripciones
-            </h3>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Mis Transcripciones
+              </h3>
+              <!-- Indicador de polling -->
+              <div
+                v-if="isPolling"
+                class="flex items-center text-blue-600 text-sm"
+              >
+                <div
+                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"
+                ></div>
+                Actualizando...
+              </div>
+            </div>
           </div>
 
           <div v-if="transcriptionHistory.length === 0" class="p-8 text-center">
@@ -78,9 +86,39 @@
             >
               <div class="flex justify-between items-start">
                 <div class="flex-1">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-1">
-                    {{ item.fileName }}
-                  </h4>
+                  <div class="flex items-center gap-2 mb-1">
+                    <h4 class="font-medium text-gray-900 dark:text-white">
+                      {{ item.fileName }}
+                    </h4>
+                    <!-- Indicador de estado -->
+                    <span
+                      v-if="item.status === 'processing'"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      <div
+                        class="animate-spin rounded-full h-3 w-3 border-b border-blue-600 mr-1"
+                      ></div>
+                      Procesando
+                    </span>
+                    <span
+                      v-else-if="item.status === 'pending'"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                    >
+                      Pendiente
+                    </span>
+                    <span
+                      v-else-if="item.status === 'completed'"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                    >
+                      ✓ Completado
+                    </span>
+                    <span
+                      v-else-if="item.status === 'failed'"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                    >
+                      ✗ Error
+                    </span>
+                  </div>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
                     {{ item.date }} • {{ getWordCount(item.result) }} palabras
                   </p>
@@ -90,16 +128,16 @@
                     {{ item.result.substring(0, 150) }}...
                   </p>
                 </div>
-                <div class="flex space-x-2 ml-4">
+                <div class="flex space-x-2 ml-4 gap-2">
                   <button
                     @click="loadTranscription(item)"
-                    class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    class="bg-blue-600 text-white hover:bg:text-blue-700 text-sm font-medium px-4 py-2 rounded-lg"
                   >
                     Ver
                   </button>
                   <button
                     @click="deleteTranscription(item.id)"
-                    class="text-red-600 hover:text-red-700 text-sm font-medium"
+                    class="bg-red-600 text-white hover:bg-red-700 text-sm font-medium px-4 py-2 rounded-lg"
                   >
                     Eliminar
                   </button>
@@ -166,10 +204,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 
 // Composables
 const { logout } = useAuth();
+const { isPolling, handleIntelligentPolling, stopPolling } =
+  useTranscriptionPolling();
+
+// Limpiar polling al desmontar el componente
+onUnmounted(() => {
+  stopPolling();
+});
 
 // Funciones de API locales
 const getTranscriptions = async () => {
@@ -228,8 +273,11 @@ const loadTranscriptions = async () => {
     const response = await getTranscriptions();
 
     if (response.success && response.data) {
+      // Guardar estado anterior para detectar cambios
+      const previousTranscriptions = [...transcriptionHistory.value];
+
       // Convertir formato de API al formato esperado por el componente
-      transcriptionHistory.value = response.data.map((item: any) => ({
+      const newTranscriptions = response.data.map((item: any) => ({
         id: item.id,
         fileName: item.audioFile?.originalFilename || 'archivo.mp3',
         date: new Date(item.createdAt).toLocaleDateString('es-ES'),
@@ -244,6 +292,39 @@ const loadTranscriptions = async () => {
             : 'Pendiente de procesar'),
         status: item.status,
       }));
+
+      // Detectar transcripciones que cambiaron de estado
+      if (previousTranscriptions.length > 0) {
+        newTranscriptions.forEach((newItem) => {
+          const oldItem = previousTranscriptions.find(
+            (old) => old.id === newItem.id
+          );
+          if (oldItem && oldItem.status !== newItem.status) {
+            // Estado cambió, mostrar notificación si se completó o falló
+            if (newItem.status === 'completed' || newItem.status === 'failed') {
+              console.log(
+                `🔔 Transcripción ${newItem.fileName} cambió a: ${newItem.status}`
+              );
+
+              // Mostrar notificación si está disponible
+              if (
+                typeof (globalThis as any).$transcriptionNotification ===
+                'function'
+              ) {
+                (globalThis as any).$transcriptionNotification(
+                  newItem.fileName,
+                  newItem.status
+                );
+              }
+            }
+          }
+        });
+      }
+
+      transcriptionHistory.value = newTranscriptions;
+
+      // Manejar polling inteligente basado en el estado de las transcripciones
+      handleIntelligentPolling(transcriptionHistory.value, loadTranscriptions);
     }
   } catch (error) {
     console.error('Error cargando transcripciones:', error);
@@ -309,6 +390,18 @@ const deleteTranscription = async (id: number) => {
 };
 
 const getWordCount = (text: string) => {
+  // Solo contar palabras si el texto no es un mensaje de estado
+  const statusMessages = [
+    'Transcripción completada',
+    'Transcripción en proceso...',
+    'Error en transcripción',
+    'Pendiente de procesar',
+  ];
+
+  if (statusMessages.includes(text)) {
+    return 0;
+  }
+
   return text
     .trim()
     .split(/\s+/)
